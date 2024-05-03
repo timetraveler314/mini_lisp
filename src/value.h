@@ -37,6 +37,8 @@ public:
     }
 
     virtual std::string toString() const = 0;
+
+    static ValuePtr fromVector(const std::vector<ValuePtr>& values);
 };
 
 template<ValueType value_type, typename T>

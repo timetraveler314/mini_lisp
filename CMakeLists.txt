@@ -5,7 +5,9 @@ project(mini_lisp)
 aux_source_directory(src SOURCES)
 add_executable(mini_lisp ${SOURCES}
         src/value.cpp
-        src/value.h)
+        src/value.h
+        src/parser.cpp
+        src/parser.h)
 set_target_properties(
   mini_lisp
   PROPERTIES CXX_STANDARD 20
@@ -16,3 +18,11 @@ set_target_properties(
 if(MSVC)
   target_compile_options(mini_lisp PRIVATE /utf-8 /Zc:preprocessor)
 endif()
+
+set(SOURCES_EXCLUDE_MAIN "${SOURCES}")
+list(FILTER SOURCES_EXCLUDE_MAIN EXCLUDE REGEX "src/main.cpp")
+add_executable(test_mini_lisp ${SOURCES_EXCLUDE_MAIN} test/test.cpp)
+set_target_properties(
+        test_mini_lisp
+        PROPERTIES CXX_STANDARD 20
+        CXX_STANDARD_REQUIRED ON)

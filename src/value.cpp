@@ -9,6 +9,14 @@
 
 #include "error.h"
 
+ValuePtr Value::fromVector(const std::vector<ValuePtr> &values) {
+    ValuePtr result = std::make_shared<NilValue>();
+    for (auto it = values.rbegin(); it != values.rend(); ++it) {
+        result = std::make_shared<PairValue>(*it, result);
+    }
+    return result;
+}
+
 /**
  * @brief 将 NumericValue 转换为字符串表示形式
  *
