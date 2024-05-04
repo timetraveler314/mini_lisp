@@ -14,6 +14,10 @@ public:
     EvalEnv();
 
     ValuePtr eval(ValuePtr expr);
+    ValuePtr apply(ValuePtr proc, std::vector<ValuePtr> args);
+
+    // std::vector<ValuePtr> evalList(ValuePtr expr);
+
     std::optional<ValuePtr> lookup(const std::string& symbol) const;
 };
 

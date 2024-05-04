@@ -12,7 +12,8 @@
 bool Value::isSelfEvaluating() const {
     return getType() == ValueType::NUMERIC_VALUE
            || getType() == ValueType::BOOLEAN_VALUE
-           || getType() == ValueType::STRING_VALUE;
+           || getType() == ValueType::STRING_VALUE
+           || getType() == ValueType::BUILTIN_PROC_VALUE;
 }
 
 bool Value::isNumber() const {
@@ -29,6 +30,10 @@ bool Value::isPair() const {
 
 bool Value::isSymbol() const {
     return getType() == ValueType::SYMBOL_VALUE;
+}
+
+bool Value::isBuiltinProc() const {
+    return getType() == ValueType::BUILTIN_PROC_VALUE;
 }
 
 bool Value::isNonEmptyList() const {

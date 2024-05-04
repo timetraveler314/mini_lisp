@@ -1,10 +1,10 @@
-1. 因为若按值传入 std::string, 会导致传参时发生一次拷贝，而按引用传入效率更高。其中， const std::string& 表示传入的字符串不会被修改，一方面表明了语义，另一方面也能接受 const std::string 对象。
+1. 因为若按值传入 std::string, 会导致传参时发生一次拷贝，而按引用传入效率更高。其中，const std::string& 表示传入的字符串不会被修改，一方面表明了语义，另一方面也能接受 const std::string 对象。
 
 2. 智能指针在超出其作用域时自动释放指向的对象，从而避免内存泄漏。此外，在发生异常时，智能指针也能够保证资源被释放，这些是裸指针所不具备的。
 
 3. 首先通过 std::ostream& operator<<(std::ostream& os, const Token& token) 的运算符重载，实现 std::cout << *token; 的写法;
    在运算符的内部实现中，通过虚函数 Token::toString() 多态和 Token 的子类中重载，实现了派发到不同 Token 类型的 toString() 函数，从而实现了不同 Token 类型的输出。
 
-4. 发生错误时，tokenizer抛出对应异常，由 main 函数中的 try-catch 语句捕获异常并输出错误信息，然后进行下一次 REPL 循环。
+4. 发生错误时，tokenizer抛出对应异常，由 main 函数中的 try-catch 语句捕获异常并通过标准错误 std::cerr 报告该错误，然后进行下一次 REPL 循环。
 
 5. std::deque 相比 std::vector 在头部插入和删除的效率更高，而在这里后续 parse 时需要从头部弹出 Token, 故选择 std::deque。

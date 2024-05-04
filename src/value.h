@@ -18,10 +18,12 @@ enum class ValueType {
     NIL_VALUE,
     SYMBOL_VALUE,
     PAIR_VALUE,
+    BUILTIN_PROC_VALUE,
 };
 
 class Value;
 using ValuePtr = std::shared_ptr<Value>;
+using BuiltinFuncType = ValuePtr(const std::vector<ValuePtr>&);
 
 class Value {
     ValueType type;
@@ -44,6 +46,7 @@ public:
     bool isNil() const;
     bool isPair() const;
     bool isSymbol() const;
+    bool isBuiltinProc() const;
     bool isNonEmptyList() const;
     bool isList() const;
 
@@ -98,6 +101,21 @@ public:
     }
 
     std::string toString() const override;
+};
+
+class BuiltinProcValue : public Value {
+    BuiltinFuncType* func;
+
+public:
+    explicit BuiltinProcValue(BuiltinFuncType* func): Value(ValueType::BUILTIN_PROC_VALUE), func{func} {}
+
+    inline ValuePtr call(const std::vector<ValuePtr>& params) {
+        return func(params);
+    }
+
+    inline std::string toString() const override {
+        return "#<procedure>";
+    }
 };
 
 #endif //MINI_LISP_VALUE_H

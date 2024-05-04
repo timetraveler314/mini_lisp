@@ -2,10 +2,18 @@
 // Created by timetraveler314 on 5/3/24.
 //
 
+#include <algorithm>
+#include <iterator>
+#include <ranges>
+
 #include "eval_env.h"
 #include "error.h"
+#include "builtins.h"
 
 EvalEnv::EvalEnv(): symbolTable() {
+    for (const auto& [name, value] : Builtins::builtinMap) {
+        symbolTable[name] = value;
+    }
 }
 
 ValuePtr EvalEnv::eval(ValuePtr expr) {
@@ -37,10 +45,23 @@ ValuePtr EvalEnv::eval(ValuePtr expr) {
 
             symbolTable[*symbol] = eval(value);
             return std::make_shared<NilValue>();
+        } else { // Not special form
+            auto proc = eval(list[0]);
+            auto args = list | std::views::drop(1)
+                    | std::views::transform([this](ValuePtr v) { return this->eval(v); });
+            return this->apply(proc, std::vector<ValuePtr>(args.begin(), args.end()));
         }
     }
 
     throw LispError("Unimplemented");
+}
+
+ValuePtr EvalEnv::apply(ValuePtr proc, std::vector<ValuePtr> args) {
+    if (proc->isBuiltinProc()) {
+        return dynamic_cast<BuiltinProcValue*>(proc.get())->call(args);
+    } else {
+        throw LispError("Unimplemented");
+    }
 }
 
 std::optional<ValuePtr> EvalEnv::lookup(const std::string& symbol) const {
