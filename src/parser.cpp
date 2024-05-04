@@ -45,6 +45,8 @@ ValuePtr Parser::parse() {
             throw SyntaxError("Unexcepted ')'.");
         case TokenType::DOT:
             throw SyntaxError("Unexpected '.'.");
+        default:
+            throw SyntaxError("Unexpected token.");
     }
 }
 

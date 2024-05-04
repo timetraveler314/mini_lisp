@@ -32,11 +32,23 @@ protected:
 public:
     virtual ~Value() = default;
 
-    ValueType getType() const {
+    inline ValueType getType() const {
         return type;
     }
 
     virtual std::string toString() const = 0;
+    std::vector<ValuePtr> toVector();
+
+    bool isSelfEvaluating() const;
+    bool isNumber() const;
+    bool isNil() const;
+    bool isPair() const;
+    bool isSymbol() const;
+    bool isNonEmptyList() const;
+    bool isList() const;
+
+    std::optional<std::string> asSymbol() const;
+    std::optional<double> asNumber() const;
 
     static ValuePtr fromVector(const std::vector<ValuePtr>& values);
 };

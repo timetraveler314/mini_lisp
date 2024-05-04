@@ -9,12 +9,93 @@
 
 #include "error.h"
 
+bool Value::isSelfEvaluating() const {
+    return getType() == ValueType::NUMERIC_VALUE
+           || getType() == ValueType::BOOLEAN_VALUE
+           || getType() == ValueType::STRING_VALUE;
+}
+
+bool Value::isNumber() const {
+    return getType() == ValueType::NUMERIC_VALUE;
+}
+
+bool Value::isNil() const {
+    return getType() == ValueType::NIL_VALUE;
+}
+
+bool Value::isPair() const {
+    return getType() == ValueType::PAIR_VALUE;
+}
+
+bool Value::isSymbol() const {
+    return getType() == ValueType::SYMBOL_VALUE;
+}
+
+bool Value::isNonEmptyList() const {
+    if (!isPair()) return false;
+
+    auto current = dynamic_cast<const PairValue*>(this);
+    while (current) {
+        if (auto pair = dynamic_cast<const PairValue*>(current->getCdr().get())) {
+            current = pair;
+        } else {
+            if (auto nil = dynamic_cast<const NilValue*>(current->getCdr().get())) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    return false;
+}
+
+bool Value::isList() const {
+    return isNil() || isNonEmptyList();
+}
+
+std::optional<std::string> Value::asSymbol() const {
+    if (isSymbol()) {
+        return dynamic_cast<const SymbolValue*>(this)->getValue();
+    } else {
+        return std::nullopt;
+    }
+}
+
+std::optional<double> Value::asNumber() const {
+    if (isNumber()) {
+        return dynamic_cast<const NumericValue*>(this)->getValue();
+    } else {
+        return std::nullopt;
+    }
+}
+
 ValuePtr Value::fromVector(const std::vector<ValuePtr> &values) {
     ValuePtr result = std::make_shared<NilValue>();
     for (auto it = values.rbegin(); it != values.rend(); ++it) {
         result = std::make_shared<PairValue>(*it, result);
     }
     return result;
+}
+
+std::vector<ValuePtr> Value::toVector() {
+    std::vector<ValuePtr> result;
+    if (isNil()) return result;
+    if (!isNonEmptyList()) throw LispError("Cannot convert improper list to vector.");
+
+    auto current = dynamic_cast<const PairValue*>(this);
+    while (true) {
+        result.push_back(current->getCar());
+        if (auto pair = dynamic_cast<const PairValue*>(current->getCdr().get())) {
+            current = pair;
+        } else {
+            if (auto nil = dynamic_cast<const NilValue*>(current->getCdr().get())) {
+                return result;
+            } else {
+                throw LispError("Cannot convert improper list to vector. This branch shall not happen.");
+            }
+        }
+    }
 }
 
 /**
