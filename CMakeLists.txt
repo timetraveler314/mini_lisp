@@ -15,10 +15,12 @@ if(MSVC)
   target_compile_options(mini_lisp PRIVATE /utf-8 /Zc:preprocessor)
 endif()
 
-set(SOURCES_EXCLUDE_MAIN "${SOURCES}")
-list(FILTER SOURCES_EXCLUDE_MAIN EXCLUDE REGEX "src/main.cpp")
-add_executable(test_mini_lisp ${SOURCES_EXCLUDE_MAIN} test/test.cpp)
-set_target_properties(
-        test_mini_lisp
-        PROPERTIES CXX_STANDARD 20
-        CXX_STANDARD_REQUIRED ON)
+add_subdirectory(test)
+
+#set(SOURCES_EXCLUDE_MAIN "${SOURCES}")
+#list(FILTER SOURCES_EXCLUDE_MAIN EXCLUDE REGEX "src/main.cpp")
+#add_executable(test_mini_lisp ${SOURCES_EXCLUDE_MAIN} test/test.cpp)
+#set_target_properties(
+#        test_mini_lisp
+#        PROPERTIES CXX_STANDARD 20
+#        CXX_STANDARD_REQUIRED ON)
