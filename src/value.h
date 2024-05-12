@@ -22,8 +22,9 @@ enum class ValueType {
 };
 
 class Value;
+class PairValue;
 using ValuePtr = std::shared_ptr<Value>;
-using BuiltinFuncType = ValuePtr(const std::vector<ValuePtr>&);
+using BuiltinFuncType = std::function<ValuePtr(const std::vector<ValuePtr>&)>;
 
 class Value {
     ValueType type;
@@ -42,7 +43,11 @@ public:
     std::vector<ValuePtr> toVector();
 
     bool isSelfEvaluating() const;
+    bool isAtomic() const;
+    bool isBoolean() const;
     bool isNumber() const;
+    bool isNumericInteger() const;
+    bool isString() const;
     bool isNil() const;
     bool isPair() const;
     bool isSymbol() const;
@@ -52,6 +57,9 @@ public:
 
     std::optional<std::string> asSymbol() const;
     std::optional<double> asNumber() const;
+    std::optional<int> asInteger() const;
+    std::optional<bool> asBoolean() const;
+    std::optional<std::string> asString() const;
 
     static ValuePtr fromVector(const std::vector<ValuePtr>& values);
 };
@@ -104,10 +112,10 @@ public:
 };
 
 class BuiltinProcValue : public Value {
-    BuiltinFuncType* func;
+    BuiltinFuncType func;
 
 public:
-    explicit BuiltinProcValue(BuiltinFuncType* func): Value(ValueType::BUILTIN_PROC_VALUE), func{func} {}
+    explicit BuiltinProcValue(BuiltinFuncType func): Value(ValueType::BUILTIN_PROC_VALUE), func{func} {}
 
     inline ValuePtr call(const std::vector<ValuePtr>& params) {
         return func(params);

@@ -11,6 +11,8 @@
 #include "../src/tokenizer.h"
 #include "../src/error.h"
 
+#include "test_builtins.cpp"
+
 TEST(ValueTest, ToString) {
     // NumericValue
     for (int i = -10000; i < 10000; i+= 1) {
@@ -24,6 +26,16 @@ TEST(ValueTest, ToString) {
     }
 }
 
+TEST(ValueTest, AsInteger) {
+    // NumericValue
+    for (int i = -10000; i < 10000; i+= 1) {
+        auto value = NumericValue(static_cast<double>(i));
+        ASSERT_EQ(value.asInteger(), i);
+    }
+
+    auto doubleValue = NumericValue(1.5);
+    EXPECT_EQ(doubleValue.asInteger(), std::nullopt);
+}
 
 TEST(ValueTest, ToVector) {
     // NilValue.toVector() should return an empty vector

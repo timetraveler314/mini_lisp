@@ -16,8 +16,31 @@ bool Value::isSelfEvaluating() const {
            || getType() == ValueType::BUILTIN_PROC_VALUE;
 }
 
+bool Value::isAtomic() const {
+    return getType() == ValueType::NUMERIC_VALUE
+           || getType() == ValueType::BOOLEAN_VALUE
+           || getType() == ValueType::STRING_VALUE
+           || getType() == ValueType::NIL_VALUE
+           || getType() == ValueType::SYMBOL_VALUE;
+}
+
+bool Value::isBoolean() const {
+    return getType() == ValueType::BOOLEAN_VALUE;
+}
+
 bool Value::isNumber() const {
     return getType() == ValueType::NUMERIC_VALUE;
+}
+
+bool Value::isNumericInteger() const {
+    if (!isNumber()) return false;
+
+    double intpart;
+    return std::modf(dynamic_cast<const NumericValue*>(this)->getValue(), &intpart) == 0.0;
+}
+
+bool Value::isString() const {
+    return getType() == ValueType::STRING_VALUE;
 }
 
 bool Value::isNil() const {
@@ -70,6 +93,31 @@ std::optional<std::string> Value::asSymbol() const {
 std::optional<double> Value::asNumber() const {
     if (isNumber()) {
         return dynamic_cast<const NumericValue*>(this)->getValue();
+    } else {
+        return std::nullopt;
+    }
+}
+
+std::optional<bool> Value::asBoolean() const {
+    if (isBoolean()) {
+        return dynamic_cast<const BooleanValue*>(this)->getValue();
+    } else {
+        return std::nullopt;
+    }
+}
+
+std::optional<int> Value::asInteger() const {
+    double intpart;
+    if (isNumber() && std::modf(dynamic_cast<const NumericValue*>(this)->getValue(), &intpart) == 0.0) {
+        return std::lround(intpart);
+    } else {
+        return std::nullopt;
+    }
+}
+
+std::optional<std::string> Value::asString() const {
+    if (isString()) {
+        return dynamic_cast<const StringValue *>(this)->getValue();
     } else {
         return std::nullopt;
     }
