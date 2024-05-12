@@ -19,6 +19,7 @@ enum class ValueType {
     SYMBOL_VALUE,
     PAIR_VALUE,
     BUILTIN_PROC_VALUE,
+    LAMBDA_VALUE
 };
 
 class Value;
@@ -124,6 +125,17 @@ public:
     inline std::string toString() const override {
         return "#<procedure>";
     }
+};
+
+class LambdaValue : public Value {
+private:
+    std::vector<std::string> params;
+    std::vector<ValuePtr> body;
+
+public:
+    LambdaValue(std::vector<std::string> params, std::vector<ValuePtr> body): Value(ValueType::LAMBDA_VALUE), params{std::move(params)}, body{std::move(body)} {}
+
+    std::string toString() const override;
 };
 
 #endif //MINI_LISP_VALUE_H

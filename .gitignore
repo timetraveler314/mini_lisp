@@ -419,3 +419,4 @@ FodyWeavers.xsd
 
 # Clang-format
 *.clang-format
+/cmake-build-debug-coverage/

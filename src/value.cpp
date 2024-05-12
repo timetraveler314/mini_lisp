@@ -212,3 +212,7 @@ std::string PairValue::toString() const {
 
     return ss.str();
 }
+
+std::string LambdaValue::toString() const {
+    return "#<procedure>";
+}

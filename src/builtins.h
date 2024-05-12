@@ -9,11 +9,10 @@
 
 #include "value.h"
 #include "error.h"
+#include "utils.h"
 
 namespace Builtins {
     extern const std::unordered_map<std::string, ValuePtr> builtinMap;
-
-    void checkParams(const std::vector<ValuePtr>& params, size_t min, size_t max, const std::string& name);
 
     ValuePtr _display(const std::vector<ValuePtr>& params);
     ValuePtr _displayln(const std::vector<ValuePtr>& params);
@@ -25,7 +24,7 @@ namespace Builtins {
     template<typename F>
     inline BuiltinFuncType typeCheckerT(F f) {
         return [f](const std::vector<ValuePtr>& params) {
-            checkParams(params, 1, 1, "builtin-type-checker");
+            Utils::checkParams(params, 1, 1, "builtin-type-checker");
             return std::make_shared<BooleanValue>(f(params[0]));
         };
     }

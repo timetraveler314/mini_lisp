@@ -75,14 +75,8 @@ const std::unordered_map<std::string, ValuePtr> Builtins::builtinMap = {
     {"zero?", std::make_shared<BuiltinProcValue>(_is_zero)},
 };
 
-void Builtins::checkParams(const std::vector<ValuePtr> &params, size_t min, size_t max, const std::string &name) {
-    if (params.size() < min || params.size() > max) {
-        throw LispError(name + ": Invalid number of arguments.");
-    }
-}
-
 ValuePtr Builtins::_display(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 1, "display");
+    Utils::checkParams(params, 1, "display");
     if (auto str = params[0]->asString()) {
         std::cout << *str;
     } else {
@@ -92,7 +86,7 @@ ValuePtr Builtins::_display(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_displayln(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 1, "displayln");
+    Utils::checkParams(params, 1, "displayln");
     if (auto str = params[0]->asString()) {
         std::cout << *str << std::endl;
     } else {
@@ -102,7 +96,7 @@ ValuePtr Builtins::_displayln(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_error(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 1, "error");
+    Utils::checkParams(params, 1, "error");
     if (auto str = params[0]->asString()) {
         throw LispError(*str);
     } else {
@@ -112,7 +106,7 @@ ValuePtr Builtins::_error(const std::vector<ValuePtr> &params) {
 
 ValuePtr Builtins::_exit(const std::vector<ValuePtr> &params) {
     if (params.empty()) std::exit(0);
-    checkParams(params, 0, 1, "exit");
+    Utils::checkParams(params, 0, 1, "exit");
     if (params[0]->asInteger()) {
         std::exit(*params[0]->asInteger());
     } else {
@@ -121,19 +115,19 @@ ValuePtr Builtins::_exit(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_newline(const std::vector<ValuePtr> &params) {
-    checkParams(params, 0, 0, "newline");
+    Utils::checkParams(params, 0, "newline");
     std::cout << std::endl;
     return std::make_shared<NilValue>();
 }
 
 ValuePtr Builtins::_print(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 1, "print");
+    Utils::checkParams(params, 1, "print");
     std::cout << params[0]->toString() << std::endl;
     return std::make_shared<NilValue>();
 }
 
 ValuePtr Builtins::_car(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 1, "car");
+    Utils::checkParams(params, 1, "car");
     if (params[0]->isPair()) {
         auto pair = std::dynamic_pointer_cast<PairValue>(params[0]);
         return pair->getCar();
@@ -143,7 +137,7 @@ ValuePtr Builtins::_car(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_cdr(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 1, "cdr");
+    Utils::checkParams(params, 1, "cdr");
     if (params[0]->isPair()) {
         auto pair = std::dynamic_pointer_cast<PairValue>(params[0]);
         return pair->getCdr();
@@ -153,12 +147,12 @@ ValuePtr Builtins::_cdr(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_cons(const std::vector<ValuePtr> &params) {
-    checkParams(params, 2, 2, "cons");
+    Utils::checkParams(params, 2, "cons");
     return std::make_shared<PairValue>(params[0], params[1]);
 }
 
 ValuePtr Builtins::_length(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 1, "length");
+    Utils::checkParams(params, 1, "length");
     try {
         auto list = params[0]->toVector();
         return std::make_shared<NumericValue>(list.size());
@@ -185,7 +179,7 @@ ValuePtr Builtins::_add(const std::vector<ValuePtr>& params) {
 }
 
 ValuePtr Builtins::_sub(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 2, "-");
+    Utils::checkParams(params, 1, 2, "-");
     if (params.size() == 1) {
         if (!params[0]->isNumber()) {
             throw LispError("-: Invalid argument.");
@@ -209,7 +203,7 @@ ValuePtr Builtins::_mul(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_div(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 2, "/");
+    Utils::checkParams(params, 1, 2, "/");
     if (params.size() == 1) {
         if (!params[0]->isNumber()) {
             throw LispError("/: Invalid argument.");
@@ -230,7 +224,7 @@ ValuePtr Builtins::_div(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_abs(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 1, "abs");
+    Utils::checkParams(params, 1, "abs");
     if (!params[0]->isNumber()) {
         throw LispError("abs: Invalid argument.");
     }
@@ -238,7 +232,7 @@ ValuePtr Builtins::_abs(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_expt(const std::vector<ValuePtr> &params) {
-    checkParams(params, 2, 2, "expt");
+    Utils::checkParams(params, 2, "expt");
     if (!params[0]->isNumber() || !params[1]->isNumber()) {
         throw LispError("expt: Invalid argument.");
     }
@@ -251,7 +245,7 @@ ValuePtr Builtins::_expt(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_quotient(const std::vector<ValuePtr> &params) {
-    checkParams(params, 2, 2, "quotient");
+    Utils::checkParams(params, 2, "quotient");
     if (!params[0]->isNumber() || !params[1]->isNumber()) {
         throw LispError("quotient: Invalid argument.");
     }
@@ -264,7 +258,7 @@ ValuePtr Builtins::_quotient(const std::vector<ValuePtr> &params) {
 // Comparison functions
 
 ValuePtr Builtins::_eq_num(const std::vector<ValuePtr> &params) {
-    checkParams(params, 2, 2, "=");
+    Utils::checkParams(params, 2, "=");
     if (!params[0]->isNumber() || !params[1]->isNumber()) {
         throw LispError("=: Invalid argument.");
     }
@@ -272,7 +266,7 @@ ValuePtr Builtins::_eq_num(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_lt(const std::vector<ValuePtr> &params) {
-    checkParams(params, 2, 2, "<");
+    Utils::checkParams(params, 2, "<");
     if (!params[0]->isNumber() || !params[1]->isNumber()) {
         throw LispError("<: Invalid argument.");
     }
@@ -280,7 +274,7 @@ ValuePtr Builtins::_lt(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_gt(const std::vector<ValuePtr> &params) {
-    checkParams(params, 2, 2, ">");
+    Utils::checkParams(params, 2, ">");
     if (!params[0]->isNumber() || !params[1]->isNumber()) {
         throw LispError(">: Invalid argument.");
     }
@@ -288,7 +282,7 @@ ValuePtr Builtins::_gt(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_le(const std::vector<ValuePtr> &params) {
-    checkParams(params, 2, 2, "<=");
+    Utils::checkParams(params, 2, "<=");
     if (!params[0]->isNumber() || !params[1]->isNumber()) {
         throw LispError("<=: Invalid argument.");
     }
@@ -296,7 +290,7 @@ ValuePtr Builtins::_le(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_ge(const std::vector<ValuePtr> &params) {
-    checkParams(params, 2, 2, ">=");
+    Utils::checkParams(params, 2, ">=");
     if (!params[0]->isNumber() || !params[1]->isNumber()) {
         throw LispError(">=: Invalid argument.");
     }
@@ -304,7 +298,7 @@ ValuePtr Builtins::_ge(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_is_even(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 1, "even?");
+    Utils::checkParams(params, 1, "even?");
     if (!params[0]->isNumber()) {
         throw LispError("even?: Invalid argument.");
     }
@@ -312,7 +306,7 @@ ValuePtr Builtins::_is_even(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_is_odd(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 1, "odd?");
+    Utils::checkParams(params, 1, "odd?");
     if (!params[0]->isNumber()) {
         throw LispError("odd?: Invalid argument.");
     }
@@ -320,7 +314,7 @@ ValuePtr Builtins::_is_odd(const std::vector<ValuePtr> &params) {
 }
 
 ValuePtr Builtins::_is_zero(const std::vector<ValuePtr> &params) {
-    checkParams(params, 1, 1, "zero?");
+    Utils::checkParams(params, 1, "zero?");
     if (!params[0]->isNumber()) {
         throw LispError("zero?: Invalid argument.");
     }

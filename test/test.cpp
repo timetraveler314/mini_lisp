@@ -12,6 +12,7 @@
 #include "../src/error.h"
 
 #include "test_builtins.cpp"
+#include "test_special_forms.cpp"
 
 TEST(ValueTest, ToString) {
     // NumericValue

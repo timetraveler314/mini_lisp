@@ -9,6 +9,7 @@
 #include "eval_env.h"
 #include "error.h"
 #include "builtins.h"
+#include "forms.h"
 
 EvalEnv::EvalEnv(): symbolTable() {
     for (const auto& [name, value] : Builtins::builtinMap) {
@@ -30,29 +31,21 @@ ValuePtr EvalEnv::eval(ValuePtr expr) {
         }
         return *value;
     }
-    if (expr->isNonEmptyList()) {
-        using namespace std::literals;
-        auto list = expr->toVector();
-        if (list[0]->asSymbol() == "define"s) {
-            if (list.size() != 3) {
-                throw LispError("define: Invalid number of arguments.");
+    if (expr->isPair()) {
+        auto* pair = dynamic_cast<PairValue*>(expr.get());
+        if (auto name = pair->getCar()->asSymbol()) {
+            if (SpecialForms::SPECIAL_FORMS.find(*name) != SpecialForms::SPECIAL_FORMS.end()) { // Special form
+                return SpecialForms::SPECIAL_FORMS.at(*name)(pair->getCdr()->toVector(), *this);
+            } else { // Not special form, treat as built-in procedure call now
+                auto proc = eval(pair->getCar());
+                auto args = pair->getCdr()->toVector()
+                        | std::views::transform([this](ValuePtr v) { return this->eval(v); });
+                return this->apply(proc, std::vector<ValuePtr>(args.begin(), args.end()));
             }
-            auto symbol = list[1]->asSymbol();
-            if (!symbol) {
-                throw LispError("define: Invalid symbol.");
-            }
-            auto value = list[2];
-
-            symbolTable[*symbol] = eval(value);
-            return std::make_shared<NilValue>();
-        } else { // Not special form
-            auto proc = eval(list[0]);
-            auto args = list | std::views::drop(1)
-                    | std::views::transform([this](ValuePtr v) { return this->eval(v); });
-            return this->apply(proc, std::vector<ValuePtr>(args.begin(), args.end()));
+        } else { // TODO: When will this happen?
+            throw LispError("Invalid expression.");
         }
     }
-
     throw LispError("Unimplemented");
 }
 
@@ -70,4 +63,8 @@ std::optional<ValuePtr> EvalEnv::lookup(const std::string& symbol) const {
         return std::nullopt;
     }
     return it->second;
+}
+
+void EvalEnv::addSymbol(const std::string &symbol, ValuePtr value) {
+    symbolTable[symbol] = std::move(value);
 }
