@@ -9,16 +9,16 @@
 class SpecialFormsTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        env = EvalEnv();
+        env = EvalEnv::createGlobal();
     }
 
-    EvalEnv env;
+    std::shared_ptr<EvalEnv> env;
 
     std::string eval(const std::string& input) {
         auto tokens = Tokenizer::tokenize(input);
         Parser parser(std::move(tokens));
         auto value = parser.parse();
-        auto result = env.eval(std::move(value));
+        auto result = env->eval(std::move(value));
         return result->toString();
     }
 };
@@ -26,6 +26,17 @@ protected:
 TEST_F(SpecialFormsTest, Define) {
     EXPECT_EQ(eval("(define define-1 1)"), "()");
     EXPECT_EQ(eval("define-1"), "1");
+
+    // Defining lambda
+    EXPECT_EQ(eval("(define (add a b) (+ a b))"), "()");
+    EXPECT_EQ(eval("add"), "#<procedure>");
+    EXPECT_EQ(eval("(add 1 2)"), "3");
+
+    // Defining lambda with multiple expressions
+    EXPECT_EQ(eval("(define (add a b) (print a) (print b) (+ a b))"), "()");
+    testing::internal::CaptureStdout();
+    EXPECT_EQ(eval("(add 1 2)"), "3");
+    EXPECT_EQ(testing::internal::GetCapturedStdout(), "1\n2\n");
 }
 
 TEST_F(SpecialFormsTest, Quote) {

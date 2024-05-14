@@ -55,6 +55,7 @@ public:
     bool isBuiltinProc() const;
     bool isNonEmptyList() const;
     bool isList() const;
+    bool isLambda() const;
 
     std::optional<std::string> asSymbol() const;
     std::optional<double> asNumber() const;
@@ -116,7 +117,7 @@ class BuiltinProcValue : public Value {
     BuiltinFuncType func;
 
 public:
-    explicit BuiltinProcValue(BuiltinFuncType func): Value(ValueType::BUILTIN_PROC_VALUE), func{func} {}
+    explicit BuiltinProcValue(BuiltinFuncType func): Value(ValueType::BUILTIN_PROC_VALUE), func{std::move(func)} {}
 
     inline ValuePtr call(const std::vector<ValuePtr>& params) {
         return func(params);
@@ -127,15 +128,20 @@ public:
     }
 };
 
+class EvalEnv;
+
 class LambdaValue : public Value {
 private:
+    std::shared_ptr<EvalEnv> env;
     std::vector<std::string> params;
     std::vector<ValuePtr> body;
 
 public:
-    LambdaValue(std::vector<std::string> params, std::vector<ValuePtr> body): Value(ValueType::LAMBDA_VALUE), params{std::move(params)}, body{std::move(body)} {}
+    LambdaValue(std::shared_ptr<EvalEnv> env, std::vector<std::string> params, std::vector<ValuePtr> body): Value(ValueType::LAMBDA_VALUE), env{std::move(env)}, params{std::move(params)}, body{std::move(body)} {}
 
     std::string toString() const override;
+
+    ValuePtr apply(const std::vector<ValuePtr>& args);
 };
 
 #endif //MINI_LISP_VALUE_H

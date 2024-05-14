@@ -38,7 +38,7 @@ namespace SpecialForms {
                 std::vector<std::string> lambdaParams(viewLambdaParams.begin(), viewLambdaParams.end());
 
                 auto lambdaBody = std::vector(params.begin() + 1, params.end());
-                env.addSymbol(*symbol, std::make_shared<LambdaValue>(std::move(lambdaParams), std::move(lambdaBody)));
+                env.addSymbol(*symbol, std::make_shared<LambdaValue>(env.shared_from_this(), std::move(lambdaParams), std::move(lambdaBody)));
                 return std::make_shared<NilValue>();
             } else {
                 throw LispError("define: Invalid expression.");
@@ -105,6 +105,6 @@ namespace SpecialForms {
                 });
         std::vector<std::string> lambdaParams(viewLambdaParams.begin(), viewLambdaParams.end());
         auto lambdaBody = std::vector(params.begin() + 1, params.end());
-        return std::make_shared<LambdaValue>(std::move(lambdaParams), std::move(lambdaBody));
+        return std::make_shared<LambdaValue>(env.shared_from_this(), std::move(lambdaParams), std::move(lambdaBody));
     }
 }

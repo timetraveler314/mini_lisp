@@ -8,6 +8,7 @@
 #include <iomanip>
 
 #include "error.h"
+#include "eval_env.h"
 
 bool Value::isSelfEvaluating() const {
     return getType() == ValueType::NUMERIC_VALUE
@@ -151,6 +152,10 @@ std::vector<ValuePtr> Value::toVector() {
     }
 }
 
+bool Value::isLambda() const {
+    return getType() == ValueType::LAMBDA_VALUE;
+}
+
 /**
  * @brief 将 NumericValue 转换为字符串表示形式
  *
@@ -215,4 +220,17 @@ std::string PairValue::toString() const {
 
 std::string LambdaValue::toString() const {
     return "#<procedure>";
+}
+
+ValuePtr LambdaValue::apply(const std::vector<ValuePtr> &args) {
+    if (args.size() != params.size()) {
+        throw LispError("Procedure expected " + std::to_string(params.size()) + " arguments, but got " + std::to_string(args.size()));
+    }
+
+    auto lambdaEnv = env->createChild(params, args);
+    ValuePtr evalResult;
+    for (const auto& expr : body) {
+        evalResult = env->eval(expr);
+    }
+    return evalResult;
 }
