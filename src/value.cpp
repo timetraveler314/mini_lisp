@@ -10,58 +10,15 @@
 #include "error.h"
 #include "eval_env.h"
 
-bool Value::isSelfEvaluating() const {
-    return getType() == ValueType::NUMERIC_VALUE
-           || getType() == ValueType::BOOLEAN_VALUE
-           || getType() == ValueType::STRING_VALUE
-           || getType() == ValueType::BUILTIN_PROC_VALUE;
-}
-
-bool Value::isAtomic() const {
-    return getType() == ValueType::NUMERIC_VALUE
-           || getType() == ValueType::BOOLEAN_VALUE
-           || getType() == ValueType::STRING_VALUE
-           || getType() == ValueType::NIL_VALUE
-           || getType() == ValueType::SYMBOL_VALUE;
-}
-
-bool Value::isBoolean() const {
-    return getType() == ValueType::BOOLEAN_VALUE;
-}
-
-bool Value::isNumber() const {
-    return getType() == ValueType::NUMERIC_VALUE;
-}
-
 bool Value::isNumericInteger() const {
-    if (!isNumber()) return false;
+    if (!is<NumericValue>()) return false;
 
     double intpart;
     return std::modf(dynamic_cast<const NumericValue*>(this)->getValue(), &intpart) == 0.0;
 }
 
-bool Value::isString() const {
-    return getType() == ValueType::STRING_VALUE;
-}
-
-bool Value::isNil() const {
-    return getType() == ValueType::NIL_VALUE;
-}
-
-bool Value::isPair() const {
-    return getType() == ValueType::PAIR_VALUE;
-}
-
-bool Value::isSymbol() const {
-    return getType() == ValueType::SYMBOL_VALUE;
-}
-
-bool Value::isBuiltinProc() const {
-    return getType() == ValueType::BUILTIN_PROC_VALUE;
-}
-
 bool Value::isNonEmptyList() const {
-    if (!isPair()) return false;
+    if (!is<PairValue>()) return false;
 
     auto current = dynamic_cast<const PairValue*>(this);
     while (current) {
@@ -80,28 +37,12 @@ bool Value::isNonEmptyList() const {
 }
 
 bool Value::isList() const {
-    return isNil() || isNonEmptyList();
+    return is<NilValue>() || isNonEmptyList();
 }
 
 std::optional<std::string> Value::asSymbol() const {
-    if (isSymbol()) {
+    if (is<SymbolValue>()) {
         return dynamic_cast<const SymbolValue*>(this)->getValue();
-    } else {
-        return std::nullopt;
-    }
-}
-
-std::optional<double> Value::asNumber() const {
-    if (isNumber()) {
-        return dynamic_cast<const NumericValue*>(this)->getValue();
-    } else {
-        return std::nullopt;
-    }
-}
-
-std::optional<bool> Value::asBoolean() const {
-    if (isBoolean()) {
-        return dynamic_cast<const BooleanValue*>(this)->getValue();
     } else {
         return std::nullopt;
     }
@@ -109,16 +50,8 @@ std::optional<bool> Value::asBoolean() const {
 
 std::optional<int> Value::asInteger() const {
     double intpart;
-    if (isNumber() && std::modf(dynamic_cast<const NumericValue*>(this)->getValue(), &intpart) == 0.0) {
+    if (is<NumericValue>() && std::modf(dynamic_cast<const NumericValue*>(this)->getValue(), &intpart) == 0.0) {
         return std::lround(intpart);
-    } else {
-        return std::nullopt;
-    }
-}
-
-std::optional<std::string> Value::asString() const {
-    if (isString()) {
-        return dynamic_cast<const StringValue *>(this)->getValue();
     } else {
         return std::nullopt;
     }
@@ -134,7 +67,7 @@ ValuePtr Value::fromVector(const std::vector<ValuePtr> &values) {
 
 std::vector<ValuePtr> Value::toVector() {
     std::vector<ValuePtr> result;
-    if (isNil()) return result;
+    if (is<NilValue>()) return result;
     if (!isNonEmptyList()) throw LispError("Cannot convert improper list to vector.");
 
     auto current = dynamic_cast<const PairValue*>(this);
@@ -152,21 +85,6 @@ std::vector<ValuePtr> Value::toVector() {
     }
 }
 
-bool Value::isLambda() const {
-    return getType() == ValueType::LAMBDA_VALUE;
-}
-
-/**
- * @brief 将 NumericValue 转换为字符串表示形式
- *
- * 将 NumericValue
- * 对象转换为字符串表示形式，如果该值为整数，则返回整数部分的字符串形式，
- * 否则返回浮点数本身的字符串形式。
- *
- * @return 转换后的字符串
- *
- * @note 这里采用`std::modf`函数来判断一个浮点数的小数部分是否为0。
- */
 template <>
 std::string NumericValue::toString() const {
     double intpart;
@@ -185,13 +103,12 @@ std::string StringValue::toString() const {
     return ss.str();
 }
 
-template<>
-std::string SymbolValue::toString() const {
-    return value;
-}
-
 std::string NilValue::toString() const {
     return "()";
+}
+
+std::string SymbolValue::toString() const {
+    return name;
 }
 
 std::string PairValue::toString() const {
