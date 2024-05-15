@@ -18,34 +18,34 @@ const std::unordered_map<std::string, ValuePtr> Builtins::builtinMap = {
 
     // TypeCheckers
     {"atom?", std::make_shared<BuiltinProcValue>(typeCheckerT([](const ValuePtr& v) {
-            return v->isAtomic();
+            return v->is<AtomicValue>();
     }))},
     {"boolean?", std::make_shared<BuiltinProcValue>(typeCheckerT([](const ValuePtr& v) {
-            return v->isBoolean();
+            return v->is<BooleanValue>();
     }))},
     {"integer?", std::make_shared<BuiltinProcValue>(typeCheckerT([](const ValuePtr& v) {
             return v->isNumericInteger();
     }))},
     {"list?", std::make_shared<BuiltinProcValue>(typeCheckerT([](const ValuePtr& v) {
-            return v->isNonEmptyList() || v->isNil();
+            return v->isList();
     }))},
     {"number?", std::make_shared<BuiltinProcValue>(typeCheckerT([](const ValuePtr& v) {
-            return v->isNumber();
+            return v->is<NumericValue>();
     }))},
     {"pair?", std::make_shared<BuiltinProcValue>(typeCheckerT([](const ValuePtr& v) {
-            return v->isPair();
+            return v->is<PairValue>();
     }))},
     {"null?", std::make_shared<BuiltinProcValue>(typeCheckerT([](const ValuePtr& v) {
-            return v->isNil();
+            return v->is<NilValue>();
     }))},
     {"string?", std::make_shared<BuiltinProcValue>(typeCheckerT([](const ValuePtr& v) {
-            return v->isString();
+            return v->is<StringValue>();
     }))},
     {"symbol?", std::make_shared<BuiltinProcValue>(typeCheckerT([](const ValuePtr& v) {
-            return v->isSymbol();
+            return v->is<SymbolValue>();
     }))},
     {"procedure?", std::make_shared<BuiltinProcValue>(typeCheckerT([](const ValuePtr& v) {
-            return v->isBuiltinProc(); // TODO: Lambda
+            return v->is<ProcedureValue>();
     }))},
 
     // List functions
@@ -77,7 +77,7 @@ const std::unordered_map<std::string, ValuePtr> Builtins::builtinMap = {
 
 ValuePtr Builtins::_display(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 1, "display");
-    if (auto str = params[0]->asString()) {
+    if (auto str = params[0]->as<StringValue>()) {
         std::cout << *str;
     } else {
         std::cout << params[0]->toString();
@@ -87,7 +87,7 @@ ValuePtr Builtins::_display(const std::vector<ValuePtr> &params) {
 
 ValuePtr Builtins::_displayln(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 1, "displayln");
-    if (auto str = params[0]->asString()) {
+    if (auto str = params[0]->as<StringValue>()) {
         std::cout << *str << std::endl;
     } else {
         std::cout << params[0]->toString() << std::endl;
@@ -97,7 +97,7 @@ ValuePtr Builtins::_displayln(const std::vector<ValuePtr> &params) {
 
 ValuePtr Builtins::_error(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 1, "error");
-    if (auto str = params[0]->asString()) {
+    if (auto str = params[0]->as<StringValue>()) {
         throw LispError(*str);
     } else {
         throw LispError(params[0]->toString());
@@ -128,7 +128,7 @@ ValuePtr Builtins::_print(const std::vector<ValuePtr> &params) {
 
 ValuePtr Builtins::_car(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 1, "car");
-    if (params[0]->isPair()) {
+    if (params[0]->is<PairValue>()) {
         auto pair = std::dynamic_pointer_cast<PairValue>(params[0]);
         return pair->getCar();
     } else {
@@ -138,7 +138,7 @@ ValuePtr Builtins::_car(const std::vector<ValuePtr> &params) {
 
 ValuePtr Builtins::_cdr(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 1, "cdr");
-    if (params[0]->isPair()) {
+    if (params[0]->is<PairValue>()) {
         auto pair = std::dynamic_pointer_cast<PairValue>(params[0]);
         return pair->getCdr();
     } else {
@@ -170,10 +170,10 @@ ValuePtr Builtins::_list(const std::vector<ValuePtr> &params) {
 ValuePtr Builtins::_add(const std::vector<ValuePtr>& params) {
     double result = 0;
     for (const auto& i : params) {
-        if (!i->isNumber()) {
+        if (!i->is<NumericValue>()) {
             throw LispError("Cannot add a non-numeric value.");
         }
-        result += *(i->asNumber());
+        result += *(i->as<NumericValue>());
     }
     return std::make_shared<NumericValue>(result);
 }
@@ -181,64 +181,64 @@ ValuePtr Builtins::_add(const std::vector<ValuePtr>& params) {
 ValuePtr Builtins::_sub(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 1, 2, "-");
     if (params.size() == 1) {
-        if (!params[0]->isNumber()) {
+        if (!params[0]->is<NumericValue>()) {
             throw LispError("-: Invalid argument.");
         }
-        return std::make_shared<NumericValue>(-*(params[0]->asNumber()));
+        return std::make_shared<NumericValue>(-*(params[0]->as<NumericValue>()));
     } else {
-        if (!params[0]->isNumber() || !params[1]->isNumber()) {
+        if (!params[0]->is<NumericValue>() || !params[1]->is<NumericValue>()) {
             throw LispError("-: Invalid argument.");
         }
-        return std::make_shared<NumericValue>(*params[0]->asNumber() - *params[1]->asNumber());
+        return std::make_shared<NumericValue>(*params[0]->as<NumericValue>() - *params[1]->as<NumericValue>());
     }
 }
 
 ValuePtr Builtins::_mul(const std::vector<ValuePtr> &params) {
     return std::accumulate(params.begin(), params.end(), std::make_shared<NumericValue>(1.0), [](const ValuePtr& a, const ValuePtr& b) {
-        if (!a->isNumber() || !b->isNumber()) {
+        if (!a->is<NumericValue>() || !b->is<NumericValue>()) {
             throw LispError("*: Invalid argument.");
         }
-        return std::make_shared<NumericValue>(*a->asNumber() * *b->asNumber());
+        return std::make_shared<NumericValue>(*a->as<NumericValue>() * *b->as<NumericValue>());
     });
 }
 
 ValuePtr Builtins::_div(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 1, 2, "/");
     if (params.size() == 1) {
-        if (!params[0]->isNumber()) {
+        if (!params[0]->is<NumericValue>()) {
             throw LispError("/: Invalid argument.");
         }
-        if (*params[0]->asNumber() == 0.0) {
+        if (*params[0]->as<NumericValue>() == 0.0) {
             throw LispError("/: Division by zero.");
         }
-        return std::make_shared<NumericValue>(1 / *params[0]->asNumber());
+        return std::make_shared<NumericValue>(1 / *params[0]->as<NumericValue>());
     } else {
-        if (!params[0]->isNumber() || !params[1]->isNumber()) {
+        if (!params[0]->is<NumericValue>() || !params[1]->is<NumericValue>()) {
             throw LispError("/: Invalid argument.");
         }
-        if (*params[1]->asNumber() == 0.0) {
+        if (*params[1]->as<NumericValue>() == 0.0) {
             throw LispError("/: Division by zero.");
         }
-        return std::make_shared<NumericValue>(*params[0]->asNumber() / *params[1]->asNumber());
+        return std::make_shared<NumericValue>(*params[0]->as<NumericValue>() / *params[1]->as<NumericValue>());
     }
 }
 
 ValuePtr Builtins::_abs(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 1, "abs");
-    if (!params[0]->isNumber()) {
+    if (!params[0]->is<NumericValue>()) {
         throw LispError("abs: Invalid argument.");
     }
-    return std::make_shared<NumericValue>(std::abs(*params[0]->asNumber()));
+    return std::make_shared<NumericValue>(std::abs(*params[0]->as<NumericValue>()));
 }
 
 ValuePtr Builtins::_expt(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 2, "expt");
-    if (!params[0]->isNumber() || !params[1]->isNumber()) {
+    if (!params[0]->is<NumericValue>() || !params[1]->is<NumericValue>()) {
         throw LispError("expt: Invalid argument.");
     }
 
     std::feclearexcept(FE_ALL_EXCEPT);
-    auto result = std::make_shared<NumericValue>(std::pow(*params[0]->asNumber(), *params[1]->asNumber()));
+    auto result = std::make_shared<NumericValue>(std::pow(*params[0]->as<NumericValue>(), *params[1]->as<NumericValue>()));
     if (std::fetestexcept(FE_INVALID)) throw LispError("expt: base is finite and negative and exp is finite and non-integer.");
     if (std::fetestexcept(FE_DIVBYZERO)) throw LispError("expt: base is zero and exp is negative.");
     return result;
@@ -246,77 +246,77 @@ ValuePtr Builtins::_expt(const std::vector<ValuePtr> &params) {
 
 ValuePtr Builtins::_quotient(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 2, "quotient");
-    if (!params[0]->isNumber() || !params[1]->isNumber()) {
+    if (!params[0]->is<NumericValue>() || !params[1]->is<NumericValue>()) {
         throw LispError("quotient: Invalid argument.");
     }
-    if (*params[1]->asNumber() == 0.0) {
+    if (*params[1]->as<NumericValue>() == 0.0) {
         throw LispError("quotient: Division by zero.");
     }
-    return std::make_shared<NumericValue>(std::trunc(*params[0]->asNumber() / *params[1]->asNumber()));
+    return std::make_shared<NumericValue>(std::trunc(*params[0]->as<NumericValue>() / *params[1]->as<NumericValue>()));
 }
 
 // Comparison functions
 
 ValuePtr Builtins::_eq_num(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 2, "=");
-    if (!params[0]->isNumber() || !params[1]->isNumber()) {
+    if (!params[0]->is<NumericValue>() || !params[1]->is<NumericValue>()) {
         throw LispError("=: Invalid argument.");
     }
-    return std::make_shared<BooleanValue>(*params[0]->asNumber() == *params[1]->asNumber());
+    return std::make_shared<BooleanValue>(*params[0]->as<NumericValue>() == *params[1]->as<NumericValue>());
 }
 
 ValuePtr Builtins::_lt(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 2, "<");
-    if (!params[0]->isNumber() || !params[1]->isNumber()) {
+    if (!params[0]->is<NumericValue>() || !params[1]->is<NumericValue>()) {
         throw LispError("<: Invalid argument.");
     }
-    return std::make_shared<BooleanValue>(*params[0]->asNumber() < *params[1]->asNumber());
+    return std::make_shared<BooleanValue>(*params[0]->as<NumericValue>() < *params[1]->as<NumericValue>());
 }
 
 ValuePtr Builtins::_gt(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 2, ">");
-    if (!params[0]->isNumber() || !params[1]->isNumber()) {
+    if (!params[0]->is<NumericValue>() || !params[1]->is<NumericValue>()) {
         throw LispError(">: Invalid argument.");
     }
-    return std::make_shared<BooleanValue>(*params[0]->asNumber() > *params[1]->asNumber());
+    return std::make_shared<BooleanValue>(*params[0]->as<NumericValue>() > *params[1]->as<NumericValue>());
 }
 
 ValuePtr Builtins::_le(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 2, "<=");
-    if (!params[0]->isNumber() || !params[1]->isNumber()) {
+    if (!params[0]->is<NumericValue>() || !params[1]->is<NumericValue>()) {
         throw LispError("<=: Invalid argument.");
     }
-    return std::make_shared<BooleanValue>(*params[0]->asNumber() <= *params[1]->asNumber());
+    return std::make_shared<BooleanValue>(*params[0]->as<NumericValue>() <= *params[1]->as<NumericValue>());
 }
 
 ValuePtr Builtins::_ge(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 2, ">=");
-    if (!params[0]->isNumber() || !params[1]->isNumber()) {
+    if (!params[0]->is<NumericValue>() || !params[1]->is<NumericValue>()) {
         throw LispError(">=: Invalid argument.");
     }
-    return std::make_shared<BooleanValue>(*params[0]->asNumber() >= *params[1]->asNumber());
+    return std::make_shared<BooleanValue>(*params[0]->as<NumericValue>() >= *params[1]->as<NumericValue>());
 }
 
 ValuePtr Builtins::_is_even(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 1, "even?");
-    if (!params[0]->isNumber()) {
+    if (!params[0]->is<NumericValue>()) {
         throw LispError("even?: Invalid argument.");
     }
-    return std::make_shared<BooleanValue>(std::fmod(*params[0]->asNumber(), 2) == 0);
+    return std::make_shared<BooleanValue>(std::fmod(*params[0]->as<NumericValue>(), 2) == 0);
 }
 
 ValuePtr Builtins::_is_odd(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 1, "odd?");
-    if (!params[0]->isNumber()) {
+    if (!params[0]->is<NumericValue>()) {
         throw LispError("odd?: Invalid argument.");
     }
-    return std::make_shared<BooleanValue>(std::fmod(*params[0]->asNumber(), 2) != 0);
+    return std::make_shared<BooleanValue>(std::fmod(*params[0]->as<NumericValue>(), 2) != 0);
 }
 
 ValuePtr Builtins::_is_zero(const std::vector<ValuePtr> &params) {
     Utils::checkParams(params, 1, "zero?");
-    if (!params[0]->isNumber()) {
+    if (!params[0]->is<NumericValue>()) {
         throw LispError("zero?: Invalid argument.");
     }
-    return std::make_shared<BooleanValue>(*params[0]->asNumber() == 0);
+    return std::make_shared<BooleanValue>(*params[0]->as<NumericValue>() == 0);
 }

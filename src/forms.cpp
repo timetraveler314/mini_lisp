@@ -19,9 +19,9 @@ namespace SpecialForms {
     ValuePtr _define(const std::vector<ValuePtr> &params, EvalEnv &env) {
         if (auto symbol = std::dynamic_pointer_cast<SymbolValue>(params[0])) {
             Utils::checkParams(params, 2, "define");
-            env.addSymbol(symbol->getValue(), env.eval(params[1]));
+            env.defineBinding(symbol->getValue(), env.eval(params[1]));
         } else if (auto pair = std::dynamic_pointer_cast<PairValue>(params[0])) {
-            if (pair->getCar()->isSymbol()) {
+            if (pair->getCar()->is<SymbolValue>()) {
                 if (params.size() < 2) {
                     throw LispError("define: expected at least 2 arguments.");
                 }
@@ -38,7 +38,7 @@ namespace SpecialForms {
                 std::vector<std::string> lambdaParams(viewLambdaParams.begin(), viewLambdaParams.end());
 
                 auto lambdaBody = std::vector(params.begin() + 1, params.end());
-                env.addSymbol(*symbol, std::make_shared<LambdaValue>(env.shared_from_this(), std::move(lambdaParams), std::move(lambdaBody)));
+                env.defineBinding(*symbol, std::make_shared<LambdaValue>(env.shared_from_this(), std::move(lambdaParams), std::move(lambdaBody)));
                 return std::make_shared<NilValue>();
             } else {
                 throw LispError("define: Invalid expression.");
@@ -57,7 +57,7 @@ namespace SpecialForms {
 
     ValuePtr _if(const std::vector<ValuePtr> &params, EvalEnv &env) {
         Utils::checkParams(params, 3, "if");
-        auto condition = env.eval(params[0])->asBoolean();
+        auto condition = env.eval(params[0])->as<BooleanValue>();
         if (condition && !(*condition)) { // Condition evaluates to #f
             return env.eval(params[2]);
         } else {
@@ -72,7 +72,7 @@ namespace SpecialForms {
         ValuePtr evalResult;
         for (const auto& param : params) {
             evalResult = env.eval(param);
-            if (evalResult->isBoolean() && !*evalResult->asBoolean()) {
+            if (evalResult->is<BooleanValue>() && !*evalResult->as<BooleanValue>()) {
                 return std::make_shared<BooleanValue>(false);
             }
         }
@@ -87,7 +87,7 @@ namespace SpecialForms {
         ValuePtr evalResult;
         for (const auto& param : params) {
             evalResult = env.eval(param);
-            if (!evalResult->isBoolean() || *evalResult->asBoolean()) { // evalResult is not #f
+            if (!evalResult->is<BooleanValue>() || *evalResult->as<BooleanValue>()) { // evalResult is not #f
                 break;
             }
         }

@@ -19,13 +19,20 @@ enum class ValueType {
     SYMBOL_VALUE,
     PAIR_VALUE,
     BUILTIN_PROC_VALUE,
-    LAMBDA_VALUE
+    LAMBDA_VALUE,
+    CUSTOM_VALUE,
 };
 
 class Value;
-class PairValue;
+
 using ValuePtr = std::shared_ptr<Value>;
 using BuiltinFuncType = std::function<ValuePtr(const std::vector<ValuePtr>&)>;
+
+template<typename T>
+concept IsConcreteValue = requires(T t) {
+    std::is_base_of_v<Value, T>;
+    { t.getValue() } -> std::convertible_to<typename T::element_type>;
+};
 
 class Value {
     ValueType type;
@@ -43,43 +50,49 @@ public:
     virtual std::string toString() const = 0;
     std::vector<ValuePtr> toVector();
 
-    bool isSelfEvaluating() const;
-    bool isAtomic() const;
-    bool isBoolean() const;
-    bool isNumber() const;
+    template<class T> requires std::is_base_of_v<Value, T>
+    constexpr bool is() const {
+        return dynamic_cast<const T*>(this) != nullptr;
+    }
+
+    template<IsConcreteValue T>
+    auto as() const -> std::optional<typename T::element_type> {
+        if (is<T>()) {
+            return dynamic_cast<const T*>(this)->getValue();
+        } else {
+            return std::nullopt;
+        }
+    }
+
     bool isNumericInteger() const;
-    bool isString() const;
-    bool isNil() const;
-    bool isPair() const;
-    bool isSymbol() const;
-    bool isBuiltinProc() const;
     bool isNonEmptyList() const;
     bool isList() const;
-    bool isLambda() const;
 
     std::optional<std::string> asSymbol() const;
-    std::optional<double> asNumber() const;
     std::optional<int> asInteger() const;
-    std::optional<bool> asBoolean() const;
-    std::optional<std::string> asString() const;
 
     static ValuePtr fromVector(const std::vector<ValuePtr>& values);
 };
 
-template<ValueType value_type, typename T>
-class PrimitiveValue;
+class SelfEvaluatingValue : virtual public Value {};
 
-using BooleanValue = PrimitiveValue<ValueType::BOOLEAN_VALUE, bool>;
-using NumericValue = PrimitiveValue<ValueType::NUMERIC_VALUE, double>;
-using StringValue = PrimitiveValue<ValueType::STRING_VALUE, std::string>;
-using SymbolValue = PrimitiveValue<ValueType::SYMBOL_VALUE, std::string>;
+class AtomicValue : virtual public Value {};
 
 template<ValueType value_type, typename T>
-class PrimitiveValue : public Value {
+class ConcreteValue;
+
+using BooleanValue = ConcreteValue<ValueType::BOOLEAN_VALUE, bool>;
+using NumericValue = ConcreteValue<ValueType::NUMERIC_VALUE, double>;
+using StringValue = ConcreteValue<ValueType::STRING_VALUE, std::string>;
+
+template<ValueType value_type, typename T>
+class ConcreteValue final : public SelfEvaluatingValue, public AtomicValue {
     T value;
 
 public:
-    explicit PrimitiveValue(T value): Value(value_type), value{value} {}
+    using element_type = T;
+
+    explicit ConcreteValue(T value): Value(value_type), value{value} {}
 
     T getValue() const {
         return value;
@@ -88,14 +101,27 @@ public:
     std::string toString() const override;
 };
 
-class NilValue : public Value {
+class NilValue final : public AtomicValue {
 public:
     NilValue(): Value(ValueType::NIL_VALUE) {}
 
     std::string toString() const override;
 };
 
-class PairValue : public Value {
+class SymbolValue final : public AtomicValue {
+    std::string name;
+
+public:
+    explicit SymbolValue(std::string name): Value(ValueType::SYMBOL_VALUE), name{std::move(name)} {}
+
+    inline std::string getValue() const {
+        return name;
+    }
+
+    std::string toString() const override;
+};
+
+class PairValue final : public Value {
     ValuePtr car;
     ValuePtr cdr;
 
@@ -113,13 +139,18 @@ public:
     std::string toString() const override;
 };
 
-class BuiltinProcValue : public Value {
+class ProcedureValue : virtual public Value {
+public:
+    virtual ValuePtr apply(const std::vector<ValuePtr>& args) = 0;
+};
+
+class BuiltinProcValue final : public ProcedureValue {
     BuiltinFuncType func;
 
 public:
     explicit BuiltinProcValue(BuiltinFuncType func): Value(ValueType::BUILTIN_PROC_VALUE), func{std::move(func)} {}
 
-    inline ValuePtr call(const std::vector<ValuePtr>& params) {
+    inline ValuePtr apply(const std::vector<ValuePtr>& params) override {
         return func(params);
     }
 
@@ -130,7 +161,7 @@ public:
 
 class EvalEnv;
 
-class LambdaValue : public Value {
+class LambdaValue final : public ProcedureValue {
 private:
     std::shared_ptr<EvalEnv> env;
     std::vector<std::string> params;
@@ -141,7 +172,7 @@ public:
 
     std::string toString() const override;
 
-    ValuePtr apply(const std::vector<ValuePtr>& args);
+    ValuePtr apply(const std::vector<ValuePtr>& args) override;
 };
 
 #endif //MINI_LISP_VALUE_H

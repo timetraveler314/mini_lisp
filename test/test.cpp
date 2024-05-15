@@ -14,6 +14,36 @@
 #include "test_builtins.cpp"
 #include "test_special_forms.cpp"
 
+TEST(ValueTest, IsTemplate){
+    // NilValue
+    auto nilValue = std::make_shared<NilValue>();
+    EXPECT_TRUE(nilValue->is<NilValue>());
+    EXPECT_FALSE(nilValue->is<NumericValue>());
+
+    // NumericValue
+    auto numericValue = std::make_shared<NumericValue>(1.0);
+    EXPECT_TRUE(numericValue->is<NumericValue>());
+    EXPECT_FALSE(numericValue->is<BooleanValue>());
+
+    // BooleanValue
+    auto booleanValue = std::make_shared<BooleanValue>(true);
+    EXPECT_TRUE(booleanValue->is<BooleanValue>());
+    EXPECT_FALSE(booleanValue->is<StringValue>());
+
+    // StringValue
+    auto stringValue = std::make_shared<StringValue>("hello");
+    EXPECT_TRUE(stringValue->is<StringValue>());
+    EXPECT_FALSE(stringValue->is<SymbolValue>());
+
+    // SymbolValue
+    auto symbolValue = std::make_shared<SymbolValue>("world");
+    EXPECT_TRUE(symbolValue->is<SymbolValue>());
+    EXPECT_FALSE(symbolValue->is<PairValue>());
+
+    // SelfEvaluatingValue
+
+}
+
 TEST(ValueTest, ToString) {
     // NumericValue
     for (int i = -10000; i < 10000; i+= 1) {
@@ -53,7 +83,7 @@ TEST(ValueTest, ToVector) {
     ValuePtr resultNonEmpty = Value::fromVector(nonEmptyVector);
     auto pairResult = resultNonEmpty->toVector();
     EXPECT_EQ(pairResult.size(), 4);
-    EXPECT_EQ(pairResult[0]->asNumber(), 1.0);
+    EXPECT_EQ(pairResult[0]->as<NumericValue>(), 1.0);
     EXPECT_EQ(pairResult[1]->getType(), ValueType::BOOLEAN_VALUE);
 
     // Malformed list should throw a LispError
