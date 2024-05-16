@@ -19,8 +19,9 @@ struct TestCtx {
         return result->toString();
     }
 };
+
 int main() {
-    RJSJ_TEST(TestCtx, Lv2, Lv3, Lv4, Lv5, Lv5Extra, Lv6);
+    RJSJ_TEST(TestCtx, Lv2, Lv3, Lv4, Lv5, Lv5Extra, Lv6, Lv7, Lv7Lib);
     std::shared_ptr<EvalEnv> env = EvalEnv::createGlobal();
     while (true) {
         try {

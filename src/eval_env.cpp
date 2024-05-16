@@ -54,10 +54,13 @@ ValuePtr EvalEnv::eval(ValuePtr expr) {
 }
 
 ValuePtr EvalEnv::apply(const ValuePtr& proc, const std::vector<ValuePtr>& args) {
-    if (!proc->is<ProcedureValue>()) {
+    if (auto builtin = std::dynamic_pointer_cast<BuiltinProcValue>(proc)) {
+        return builtin->apply(args, *this);
+    } else if (auto lambda = std::dynamic_pointer_cast<LambdaValue>(proc)) {
+        return lambda->apply(args);
+    } else {
         throw LispError("Not a procedure: " + proc->toString());
     }
-    return std::dynamic_pointer_cast<ProcedureValue>(proc)->apply(args);
 }
 
 std::optional<ValuePtr> EvalEnv::lookupBinding(const std::string& symbol) const {

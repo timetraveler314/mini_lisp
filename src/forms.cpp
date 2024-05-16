@@ -18,7 +18,7 @@ namespace SpecialForms {
 
     ValuePtr _define(const std::vector<ValuePtr> &params, EvalEnv &env) {
         if (auto symbol = std::dynamic_pointer_cast<SymbolValue>(params[0])) {
-            Utils::checkParams(params, 2, "define");
+            Utils::checkParams("define", 2, params);
             env.defineBinding(symbol->getValue(), env.eval(params[1]));
         } else if (auto pair = std::dynamic_pointer_cast<PairValue>(params[0])) {
             if (pair->getCar()->is<SymbolValue>()) {
@@ -51,12 +51,12 @@ namespace SpecialForms {
     }
 
     ValuePtr _quote(const std::vector<ValuePtr> &params, EvalEnv &env) {
-        Utils::checkParams(params, 1, "quote");
+        Utils::checkParams("quote", 1, params);
         return params[0];
     }
 
     ValuePtr _if(const std::vector<ValuePtr> &params, EvalEnv &env) {
-        Utils::checkParams(params, 3, "if");
+        Utils::checkParams("if", 3, params);
         auto condition = env.eval(params[0])->as<BooleanValue>();
         if (condition && !(*condition)) { // Condition evaluates to #f
             return env.eval(params[2]);

@@ -24,9 +24,10 @@ enum class ValueType {
 };
 
 class Value;
+class EvalEnv;
 
 using ValuePtr = std::shared_ptr<Value>;
-using BuiltinFuncType = std::function<ValuePtr(const std::vector<ValuePtr>&)>;
+using BuiltinFuncType = std::function<ValuePtr(const std::vector<ValuePtr>&, EvalEnv& env)>;
 
 template<typename T>
 concept IsConcreteValue = requires(T t) {
@@ -139,10 +140,7 @@ public:
     std::string toString() const override;
 };
 
-class ProcedureValue : virtual public Value {
-public:
-    virtual ValuePtr apply(const std::vector<ValuePtr>& args) = 0;
-};
+class ProcedureValue : virtual public Value {};
 
 class BuiltinProcValue final : public ProcedureValue {
     BuiltinFuncType func;
@@ -150,16 +148,14 @@ class BuiltinProcValue final : public ProcedureValue {
 public:
     explicit BuiltinProcValue(BuiltinFuncType func): Value(ValueType::BUILTIN_PROC_VALUE), func{std::move(func)} {}
 
-    inline ValuePtr apply(const std::vector<ValuePtr>& params) override {
-        return func(params);
+    inline ValuePtr apply(const std::vector<ValuePtr>& params, EvalEnv& env) {
+        return func(params, env);
     }
 
     inline std::string toString() const override {
         return "#<procedure>";
     }
 };
-
-class EvalEnv;
 
 class LambdaValue final : public ProcedureValue {
 private:
@@ -172,7 +168,7 @@ public:
 
     std::string toString() const override;
 
-    ValuePtr apply(const std::vector<ValuePtr>& args) override;
+    ValuePtr apply(const std::vector<ValuePtr>& args);
 };
 
 #endif //MINI_LISP_VALUE_H

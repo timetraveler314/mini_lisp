@@ -112,6 +112,44 @@ TEST(ValueTest, FromVector) {
     EXPECT_EQ(resultNonEmpty->toString(), "(1 #t \"hello\" world)");
 }
 
+TEST(UtilsTest, RequireParams) {
+    std::vector<ValuePtr> params = {
+            std::make_shared<NumericValue>(1.0),
+            std::make_shared<BooleanValue>(true),
+            std::make_shared<StringValue>("hello"),
+            std::make_shared<SymbolValue>("world"),
+    };
+
+    EXPECT_NO_THROW(
+        Utils::requireParams("RequireParams", params, Utils::isInteger, Utils::isBoolean, Utils::isString, Utils::isSymbol));
+
+    try {
+        Utils::requireParams("RequireParams", params, Utils::isNumeric, Utils::isBoolean, Utils::isString);
+    } catch (const LispError& e) {
+        EXPECT_EQ(std::string(e.what()), "RequireParams: expected 3 arguments, but got 4");
+    }
+
+    try {
+        Utils::requireParams("RequireParams", params, Utils::isNumeric, Utils::isNumeric, Utils::isNumeric, Utils::isNumeric);
+    } catch (const LispError& e) {
+        EXPECT_EQ(std::string(e.what()), "RequireParams: expected argument 2 to be of type \"number\"");
+    }
+}
+
+TEST(UtilsTest, ResolveParams) {
+    std::vector<ValuePtr> params = {
+            std::make_shared<NumericValue>(1.0),
+            std::make_shared<BooleanValue>(true),
+            std::make_shared<StringValue>("hello"),
+            std::make_shared<SymbolValue>("world"),
+    };
+    auto [integer1, boolean1, string1, symbol1] = Utils::resolveParams("RequireParams", params, Utils::isInteger, Utils::isBoolean, Utils::isString, Utils::isSymbol);
+    EXPECT_EQ(integer1, 1);
+    EXPECT_EQ(boolean1, true);
+    EXPECT_EQ(string1, "hello");
+    EXPECT_EQ(symbol1, "world");
+}
+
 int main(int argc, char **argv) {
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
