@@ -12,6 +12,8 @@
 #include "error.h"
 
 namespace Utils {
+    bool isFalse(const ValuePtr& value);
+
     void checkParams(const std::string &name, size_t exact, const std::vector<ValuePtr> &params);
     void checkParams(const std::string &name, size_t min, size_t max, const std::vector<ValuePtr> &params);
 

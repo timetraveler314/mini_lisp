@@ -233,6 +233,17 @@ TEST(BuiltinsTest, Quotient) {
     ASSERT_EQ(result2->as<NumericValue>(), -1.0);
 }
 
+TEST(BuiltinsTest, Modulo) {
+    auto result = Builtins::_modulo({std::make_shared<NumericValue>(10.0), std::make_shared<NumericValue>(3.0)}, globalEnv);
+    ASSERT_EQ(result->as<NumericValue>(), 1.0);
+    auto result2 = Builtins::_modulo({std::make_shared<NumericValue>(-10.0), std::make_shared<NumericValue>(3.0)}, globalEnv);
+    ASSERT_EQ(result2->as<NumericValue>(), 2.0);
+    auto result3 = Builtins::_modulo({std::make_shared<NumericValue>(10.0), std::make_shared<NumericValue>(-3.0)}, globalEnv);
+    ASSERT_EQ(result3->as<NumericValue>(), -2.0);
+    auto result4 = Builtins::_modulo({std::make_shared<NumericValue>(-10.0), std::make_shared<NumericValue>(-3.0)}, globalEnv);
+    ASSERT_EQ(result4->as<NumericValue>(), -1.0);
+}
+
 TEST(BuiltinsTest, EqNum) {
     auto result = Builtins::_eq_num({std::make_shared<NumericValue>(1.0), std::make_shared<NumericValue>(1.0)}, globalEnv);
     ASSERT_TRUE(*result->as<BooleanValue>());

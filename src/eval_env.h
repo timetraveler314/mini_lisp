@@ -28,6 +28,8 @@ public:
 
     std::optional<ValuePtr> lookupBinding(const std::string& symbol) const;
     void defineBinding(const std::string& symbol, ValuePtr value);
+
+    std::vector<ValuePtr> evalList(ValuePtr expr);
 };
 
 #endif //MINI_LISP_EVAL_ENV_H

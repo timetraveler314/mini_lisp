@@ -147,7 +147,7 @@ ValuePtr LambdaValue::apply(const std::vector<ValuePtr> &args) {
     auto lambdaEnv = env->createChild(params, args);
     ValuePtr evalResult;
     for (const auto& expr : body) {
-        evalResult = env->eval(expr);
+        evalResult = lambdaEnv->eval(expr);
     }
     return evalResult;
 }

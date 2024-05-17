@@ -18,10 +18,17 @@ namespace SpecialForms {
     ValuePtr _define(const std::vector<ValuePtr>& params, EvalEnv& env);
     ValuePtr _quote(const std::vector<ValuePtr>& params, EvalEnv& env);
     ValuePtr _if(const std::vector<ValuePtr>& params, EvalEnv& env);
+    ValuePtr _cond(const std::vector<ValuePtr>& params, EvalEnv& env);
+    ValuePtr _let(const std::vector<ValuePtr>& params, EvalEnv& env);
+    ValuePtr _begin(const std::vector<ValuePtr>& params, EvalEnv& env);
+    ValuePtr _quasiquote(const std::vector<ValuePtr>& params, EvalEnv& env);
+    ValuePtr _unquote(const std::vector<ValuePtr>& params, EvalEnv& env);
     ValuePtr _and(const std::vector<ValuePtr>& params, EvalEnv& env);
     ValuePtr _or(const std::vector<ValuePtr>& params, EvalEnv& env);
 
     ValuePtr _lambda(const std::vector<ValuePtr>& params, EvalEnv& env);
+
+    ValuePtr _quasiquote_impl(const ValuePtr& value, EvalEnv& env);
 }
 
 #endif //MINI_LISP_FORMS_H

@@ -17,4 +17,8 @@ namespace Utils {
             throw LispError(name + ": expected " + std::to_string(min) + " to " + std::to_string(max) + " arguments, but got " + std::to_string(params.size()));
         }
     }
+
+    bool isFalse(const ValuePtr &value) {
+        return value->is<BooleanValue>() && !*(value->as<BooleanValue>());
+    }
 }

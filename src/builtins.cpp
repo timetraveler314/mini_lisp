@@ -70,8 +70,8 @@ const std::unordered_map<std::string, ValuePtr> Builtins::builtinMap = {
     {"abs", std::make_shared<BuiltinProcValue>(_abs)},
     {"expt", std::make_shared<BuiltinProcValue>(_expt)},
     {"quotient", std::make_shared<BuiltinProcValue>(_quotient)},
-    // {"remainder", std::make_shared<BuiltinProcValue>(_remainder)},
-    // {"modulo", std::make_shared<BuiltinProcValue>(_modulo)},
+    {"remainder", std::make_shared<BuiltinProcValue>(_remainder)},
+    {"modulo", std::make_shared<BuiltinProcValue>(_modulo)},
 
     {"eq?", std::make_shared<BuiltinProcValue>(_eq)},
     {"equal?", std::make_shared<BuiltinProcValue>(_equal)},
@@ -274,6 +274,20 @@ ValuePtr Builtins::_quotient(const std::vector<ValuePtr>& params, EvalEnv& env) 
     auto [x, y] = Utils::resolveParams("quotient", params, Utils::isNumeric, Utils::isNumeric);
     if (y == 0.0) throw LispError("quotient: Division by zero.");
     return std::make_shared<NumericValue>(std::trunc(x / y)); // TODO: Check
+}
+
+ValuePtr Builtins::_modulo(const std::vector<ValuePtr> &params, EvalEnv &env) {
+    auto [x, y] = Utils::resolveParams("modulo", params, Utils::isNumeric, Utils::isNumeric);
+    if (y == 0.0) throw LispError("modulo: Division by zero.");
+    auto result = std::fmod(x, y);
+    if (x * y < 0) result += y;
+    return std::make_shared<NumericValue>(result);
+}
+
+ValuePtr Builtins::_remainder(const std::vector<ValuePtr> &params, EvalEnv &env) {
+    auto [x, y] = Utils::resolveParams("remainder", params, Utils::isNumeric, Utils::isNumeric);
+    if (y == 0.0) throw LispError("remainder: Division by zero.");
+    return std::make_shared<NumericValue>(std::fmod(x, y));
 }
 
 // Comparison functions

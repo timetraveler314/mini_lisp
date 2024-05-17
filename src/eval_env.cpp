@@ -53,6 +53,14 @@ ValuePtr EvalEnv::eval(ValuePtr expr) {
     throw LispError("Unimplemented");
 }
 
+std::vector<ValuePtr> EvalEnv::evalList(ValuePtr expr) {
+    std::vector<ValuePtr> result;
+    std::ranges::transform(expr->toVector(),
+                           std::back_inserter(result),
+                           [this](ValuePtr v) { return this->eval(v); });
+    return result;
+}
+
 ValuePtr EvalEnv::apply(const ValuePtr& proc, const std::vector<ValuePtr>& args) {
     if (auto builtin = std::dynamic_pointer_cast<BuiltinProcValue>(proc)) {
         return builtin->apply(args, *this);
@@ -82,7 +90,8 @@ EvalEnv::createChild(const std::vector<std::string> &params, const std::vector<V
     if (params.size() != args.size()) {
         throw LispError("Child EvalEnv parameter count mismatch.");
     }
-    auto child = std::shared_ptr<EvalEnv>(shared_from_this());
+    auto child = EvalEnv::createGlobal();
+    child->parent = shared_from_this();
     for (size_t i = 0; i < params.size(); ++i) {
         child->defineBinding(params[i], args[i]);
     }
