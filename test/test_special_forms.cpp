@@ -15,10 +15,11 @@ protected:
     std::shared_ptr<EvalEnv> env;
 
     std::string eval(const std::string& input) {
-        auto tokens = Tokenizer::tokenize(input);
-        Parser parser(std::move(tokens));
-        auto value = parser.parse();
-        auto result = env->eval(std::move(value));
+        Tokenizer tokenizer;
+        Parser parser(tokenizer);
+        auto valueTask = parser.parse();
+        tokenizer.feed(input);
+        auto result = env->eval(valueTask.get_result().value());
         return result->toString();
     }
 };

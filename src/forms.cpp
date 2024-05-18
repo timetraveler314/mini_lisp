@@ -4,7 +4,7 @@
 #include <ranges>
 #include "forms.h"
 #include "error.h"
-#include "utils.h"
+#include "utils/utils.h"
 
 namespace SpecialForms {
     const std::unordered_map<std::string, SpecialFormType> SPECIAL_FORMS {
@@ -18,7 +18,8 @@ namespace SpecialForms {
         {"unquote", _unquote},
         {"and", _and},
         {"or", _or},
-        {"lambda", _lambda}
+        {"lambda", _lambda},
+        {"λ", _lambda}
     };
 
     ValuePtr _define(const std::vector<ValuePtr> &params, EvalEnv &env) {

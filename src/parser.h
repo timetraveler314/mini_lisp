@@ -8,17 +8,18 @@
 #include <deque>
 #include "token.h"
 #include "value.h"
+#include "tokenizer.h"
+#include "utils/utils.h"
+#include "utils/task.h"
 
 class Parser {
-    std::deque<TokenPtr> tokens;
+    Tokenizer& tokenizer;
+
 public:
-    Parser(std::deque<TokenPtr> tokens): tokens{std::move(tokens)} {}
+    explicit Parser(Tokenizer& tokenizer): tokenizer{tokenizer} {}
 
-    TokenPtr safePop();
-    TokenType safePeekTokenType() const;
-
-    ValuePtr parse();
-    ValuePtr parseTails();
+    Utils::Task<ValuePtr> parse();
+    Utils::Task<ValuePtr> parseTails();
 };
 
 #endif //MINI_LISP_PARSER_H

@@ -8,35 +8,14 @@
 #include <vector>
 #include <string>
 #include <format>
-#include "value.h"
-#include "error.h"
+#include "../value.h"
+#include "../error.h"
 
 namespace Utils {
     bool isFalse(const ValuePtr& value);
 
     void checkParams(const std::string &name, size_t exact, const std::vector<ValuePtr> &params);
     void checkParams(const std::string &name, size_t min, size_t max, const std::vector<ValuePtr> &params);
-
-//    template<size_t index>
-//    inline bool checkParamsImpl(const std::vector<ValuePtr>& params) {
-//        return index == params.size();
-//    }
-//
-//    template<typename... Preds>
-//    inline bool checkParams(const std::vector<ValuePtr>& params, Preds... preds) {
-//        return checkParamsImpl<0, Preds...>(params, preds...);
-//    }
-//    template<size_t index, typename Pred, typename... Rest>
-//    inline bool checkParamsImpl(const std::vector<ValuePtr>& params, Pred pred, Rest... preds) {
-//        if (index >= params.size()) return false;
-//        if (!pred(params[index])) return false;
-//        return checkParamsImpl<index + 1, Rest...>(params, preds...);
-//    }
-//
-//    template<typename... Preds>
-//    inline bool checkParams(const std::vector<ValuePtr>& params, Preds... preds) {
-//        return checkParamsImpl<0, Preds...>(params, preds...);
-//    }
 
     template<typename T>
     concept ValidTypePredicate = requires(T t, const ValuePtr& value) {

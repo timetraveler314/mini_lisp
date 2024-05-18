@@ -14,7 +14,10 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-aux_source_directory(../src TEST_SOURCES)
+aux_source_directory(../src TEST_SOURCES_ROOT)
+aux_source_directory(../src/utils TEST_SOURCES_UTILS)
+set (TEST_SOURCES ${TEST_SOURCES_ROOT} ${TEST_SOURCES_UTILS}
+        ../src/utils/task.h)
 set(TEST_SOURCES_EXCLUDE_MAIN "${TEST_SOURCES}")
 list(FILTER TEST_SOURCES_EXCLUDE_MAIN EXCLUDE REGEX "../src/main.cpp")
 add_executable(test_mini_lisp ${TEST_SOURCES_EXCLUDE_MAIN} test.cpp)
