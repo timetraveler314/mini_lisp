@@ -2,10 +2,12 @@ cmake_minimum_required(VERSION 3.24.2)
 
 project(mini_lisp)
 
+find_package(cxxopts REQUIRED)
+
 aux_source_directory(src SOURCES_ROOT)
 aux_source_directory(src/utils SOURCES_UTILS)
-set (SOURCES ${SOURCES_ROOT} ${SOURCES_UTILS}
-        src/utils/task.h)
+aux_source_directory(src/modes SOURCES_MODES)
+set (SOURCES ${SOURCES_ROOT} ${SOURCES_UTILS} ${SOURCES_MODES})
 add_executable(mini_lisp ${SOURCES})
 set_target_properties(
   mini_lisp

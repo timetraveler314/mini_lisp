@@ -97,3 +97,10 @@ EvalEnv::createChild(const std::vector<std::string> &params, const std::vector<V
     }
     return child;
 }
+
+void EvalEnv::reset() {
+    symbolTable.clear();
+    for (const auto& [name, value] : Builtins::builtinMap) {
+        defineBinding(name, value);
+    }
+}

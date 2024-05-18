@@ -11,8 +11,24 @@
 #include "../src/tokenizer.h"
 #include "../src/error.h"
 
+#include "../src/rjsj_test.hpp"
+
 #include "test_builtins.cpp"
 #include "test_special_forms.cpp"
+
+struct TestCtx {
+    std::shared_ptr<EvalEnv> env = EvalEnv::createGlobal();
+    TestCtx() : env(EvalEnv::createGlobal()) {};
+
+    std::string eval(const std::string& input) {
+        Tokenizer tokenizer;
+        Parser parser(tokenizer);
+        auto valueTask = parser.parse();
+        tokenizer.feed(input);
+        auto result = env->eval(valueTask.get_result().value());
+        return result->toString();
+    }
+};
 
 TEST(ValueTest, IsTemplate){
     // NilValue
@@ -151,6 +167,8 @@ TEST(UtilsTest, ResolveParams) {
 }
 
 int main(int argc, char **argv) {
+    // RJSJ_TEST(TestCtx, Lv2, Lv3, Lv4, Lv5, Lv5Extra, Lv6, Lv7, Lv7Lib, Sicp);
+
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
