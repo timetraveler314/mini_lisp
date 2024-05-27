@@ -27,7 +27,7 @@ Utils::Task<ValuePtr> Parser::parse() {
         case TokenType::QUASIQUOTE:
             co_return Value::fromVector({std::make_shared<SymbolValue>("quasiquote"), co_await parse()});
         case TokenType::RIGHT_PAREN:
-            throw SyntaxError("Unexcepted ')'.");
+            throw SyntaxError("Unexpected ')'.");
         case TokenType::DOT:
             throw SyntaxError("Unexpected '.'.");
         default:
@@ -54,4 +54,4 @@ Utils::Task<ValuePtr> Parser::parseTails() {
         auto cdr = co_await this->parseTails();
         co_return std::make_shared<PairValue>(car, cdr);
     }
-}
+} 

@@ -19,10 +19,11 @@ namespace SpecialForms {
         {"and", _and},
         {"or", _or},
         {"lambda", _lambda},
-        {"λ", _lambda}
+        {"λ", _lambda},
     };
 
     ValuePtr _define(const std::vector<ValuePtr> &params, EvalEnv &env) {
+        if (params.size() == 0) throw LispError("define: expected at least 2 arguments.");
         if (auto symbol = std::dynamic_pointer_cast<SymbolValue>(params[0])) {
             Utils::checkParams("define", 2, params);
             env.defineBinding(symbol->getValue(), env.eval(params[1]));
@@ -125,12 +126,14 @@ namespace SpecialForms {
     }
 
     ValuePtr _cond(const std::vector<ValuePtr> &params, EvalEnv &env) {
-        for (const auto& param : params) {
+        for (auto it = params.begin(); it != params.end(); it++) {
+            const auto& param = *it;
             if (auto pair = std::dynamic_pointer_cast<PairValue>(param)) {
                 if (pair->getCar()->is<SymbolValue>() && *pair->getCar()->asSymbol() == "else") {
                     if (pair->getCdr()->is<NilValue>()) {
                         throw LispError("cond: `else` must be followed by an expression.");
                     }
+                    if (it + 1 != params.end()) throw LispError("cond: `else` must be the last clause.");
                     return env.evalList(pair->getCdr()).back();
                 }
                 ValuePtr result = env.eval(pair->getCar());
@@ -205,5 +208,10 @@ namespace SpecialForms {
         }
         auto lambdaBody = std::vector(params.begin() + 1, params.end());
         return std::make_shared<LambdaValue>(env.shared_from_this(), std::move(lambdaParams), std::move(lambdaBody));
+    }
+
+    ValuePtr _delay(const std::vector<ValuePtr> &params, EvalEnv &env) {
+        Utils::checkParams("delay", 1, params);
+        return std::make_shared<LambdaValue>(env.shared_from_this(), std::vector<std::string>(), params);
     }
 }
