@@ -28,6 +28,8 @@ namespace SpecialForms {
 
     ValuePtr _lambda(const std::vector<ValuePtr>& params, EvalEnv& env);
 
+    ValuePtr _delay(const std::vector<ValuePtr>& params, EvalEnv& env);
+
     ValuePtr _quasiquote_impl(const ValuePtr& value, EvalEnv& env);
 }
 

@@ -8,7 +8,7 @@
 
 const std::set<char> TOKEN_END{'(', ')', '\'', '`', ',', '"'};
 
-TokenPtr Tokenizer::nextToken(int& pos) {
+TokenPtr Tokenizer::tokenizeNext(int& pos) {
     while (pos < input.size()) {
         auto c = input[pos];
         if (c == ';') {
@@ -73,19 +73,33 @@ TokenPtr Tokenizer::nextToken(int& pos) {
     return nullptr;
 }
 
-std::deque<TokenPtr> Tokenizer::tokenize() {
+void Tokenizer::feed(const std::string& str) {
+    input += str;
+    while (true) {
+        auto token = tokenizeNext(pos);
+        if (!token) {
+            break;
+        }
+        tokens.push_back(std::move(token));
+    }
+    while (!waiting.empty() && !tokens.empty()) {
+        auto handle = waiting.front();
+        waiting.pop();
+        handle.resume();
+    }
+}
+
+std::deque<TokenPtr> Tokenizer::__legacyTokenize(const std::string& input) {
+    Tokenizer tokenizer;
+    tokenizer.input = input;
     std::deque<TokenPtr> tokens;
     int pos = 0;
     while (true) {
-        auto token = nextToken(pos);
+        auto token = tokenizer.tokenizeNext(pos);
         if (!token) {
             break;
         }
         tokens.push_back(std::move(token));
     }
     return tokens;
-}
-
-std::deque<TokenPtr> Tokenizer::tokenize(const std::string& input) {
-    return Tokenizer(input).tokenize();
 }

@@ -380,12 +380,12 @@ ValuePtr Builtins::_ge(const std::vector<ValuePtr>& params, EvalEnv& env) {
 }
 
 ValuePtr Builtins::_is_even(const std::vector<ValuePtr>& params, EvalEnv& env) {
-    auto [x] = Utils::resolveParams("even?", params, Utils::isNumeric);
+    auto [x] = Utils::resolveParams("even?", params, Utils::isInteger);
     return std::make_shared<BooleanValue>(std::fmod(x, 2) == 0);
 }
 
 ValuePtr Builtins::_is_odd(const std::vector<ValuePtr>& params, EvalEnv& env) {
-    auto [x] = Utils::resolveParams("odd?", params, Utils::isNumeric);
+    auto [x] = Utils::resolveParams("odd?", params, Utils::isInteger);
     return std::make_shared<BooleanValue>(std::fmod(x, 2) != 0);
 }
 

@@ -21,6 +21,8 @@ public:
 
     void addSymbol(const std::string& symbol, ValuePtr value);
 
+    void reset();
+
     ValuePtr eval(ValuePtr expr);
     ValuePtr apply(const ValuePtr& proc, const std::vector<ValuePtr>& args);
 

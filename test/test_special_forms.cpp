@@ -15,10 +15,11 @@ protected:
     std::shared_ptr<EvalEnv> env;
 
     std::string eval(const std::string& input) {
-        auto tokens = Tokenizer::tokenize(input);
-        Parser parser(std::move(tokens));
-        auto value = parser.parse();
-        auto result = env->eval(std::move(value));
+        Tokenizer tokenizer;
+        Parser parser(tokenizer);
+        auto valueTask = parser.parse();
+        tokenizer.feed(input);
+        auto result = env->eval(valueTask.get_result().value());
         return result->toString();
     }
 };
@@ -37,6 +38,15 @@ TEST_F(SpecialFormsTest, Define) {
     testing::internal::CaptureStdout();
     EXPECT_EQ(eval("(add 1 2)"), "3");
     EXPECT_EQ(testing::internal::GetCapturedStdout(), "1\n2\n");
+
+    // Extreme cases
+    EXPECT_THROW(eval("(define)"), LispError);
+    EXPECT_THROW(eval("(define 1)"), LispError);
+    EXPECT_THROW(eval("(define (#t x))"), LispError);
+    EXPECT_THROW(eval("(define (f x))"), LispError);
+    EXPECT_THROW(eval("(define 1 2 3)"), LispError);
+
+    EXPECT_THROW(eval("(define (f x 1 y) (+ x y))"), LispError);
 }
 
 TEST_F(SpecialFormsTest, Quote) {
@@ -50,6 +60,9 @@ TEST_F(SpecialFormsTest, If) {
 
     // Test short-circuiting
     EXPECT_EQ(eval("(if #t 1 ())"), "1"); // Won't evaluate (), so it won't throw an error
+
+    // Undefined behavior
+    EXPECT_EQ(eval("(if #f 1)"), "()"); // the implementation should return ()
 }
 
 TEST_F(SpecialFormsTest, And) {
@@ -74,4 +87,21 @@ TEST_F(SpecialFormsTest, Or) {
     testing::internal::CaptureStdout();
     EXPECT_EQ(eval("(or #f #f (print 1) (print \"error\"))"), "()");
     EXPECT_EQ(testing::internal::GetCapturedStdout(), "1\n"); // Should not print "error"
+}
+
+TEST_F(SpecialFormsTest, Cond) {
+    EXPECT_EQ(eval("(cond)"), "()");
+    EXPECT_EQ(eval("(cond (#f 1) (#f 2))"), "()");
+    EXPECT_EQ(eval("(cond (\"notFalse\") (#f 2))"), "\"notFalse\"");
+
+    testing::internal::CaptureStdout();
+    EXPECT_EQ(eval("(cond (#t (print 1) (print 2) 3) (#f 4))"), "3");
+    EXPECT_EQ(testing::internal::GetCapturedStdout(), "1\n2\n");
+    testing::internal::CaptureStdout();
+    EXPECT_EQ(eval("(cond (#f 0) (else (print 1) (print 2) 3))"), "3");
+    EXPECT_EQ(testing::internal::GetCapturedStdout(), "1\n2\n");
+
+    EXPECT_THROW(eval("(cond (#f 1) (else))"), LispError);
+    EXPECT_THROW(eval("(cond (else 0) (#f 1))"), LispError);
+    EXPECT_THROW(eval("(cond #f (#f 1))"), LispError);
 }

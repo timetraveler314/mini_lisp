@@ -3,9 +3,12 @@
 //
 
 #include "utils.h"
-#include "error.h"
 
 namespace Utils {
+    bool isFalse(const ValuePtr &value) {
+        return value->is<BooleanValue>() && !*(value->as<BooleanValue>());
+    }
+
     void checkParams(const std::string &name, size_t exact, const std::vector<ValuePtr> &params) {
         if (params.size() != exact) {
             throw LispError(name + ": expected " + std::to_string(exact) + " arguments, but got " + std::to_string(params.size()));
@@ -16,9 +19,5 @@ namespace Utils {
         if (params.size() < min || params.size() > max) {
             throw LispError(name + ": expected " + std::to_string(min) + " to " + std::to_string(max) + " arguments, but got " + std::to_string(params.size()));
         }
-    }
-
-    bool isFalse(const ValuePtr &value) {
-        return value->is<BooleanValue>() && !*(value->as<BooleanValue>());
     }
 }

@@ -4,45 +4,30 @@
 
 #include "parser.h"
 #include "error.h"
+#include "tokenizer.h"
 
-TokenPtr Parser::safePop() {
-    if (tokens.empty()) {
-        throw EOFError("Unexpected EOF");
-    }
-    auto token = std::move(tokens.front());
-    tokens.pop_front();
-    return token;
-}
-
-TokenType Parser::safePeekTokenType() const {
-    if (tokens.empty()) {
-        throw EOFError("Unexpected EOF");
-    }
-    return tokens.front()->getType();
-}
-
-ValuePtr Parser::parse() {
-    TokenPtr token = safePop();
+Utils::Task<ValuePtr> Parser::parse() {
+    auto token = co_await tokenizer.awaitNextToken();
 
     switch (token->getType()) {
         case TokenType::NUMERIC_LITERAL:
-            return std::make_shared<NumericValue>(static_cast<NumericLiteralToken&>(*token).getValue());
+            co_return std::make_shared<NumericValue>(static_cast<NumericLiteralToken&>(*token).getValue());
         case TokenType::BOOLEAN_LITERAL:
-            return std::make_shared<BooleanValue>(static_cast<BooleanLiteralToken&>(*token).getValue());
+            co_return std::make_shared<BooleanValue>(static_cast<BooleanLiteralToken&>(*token).getValue());
         case TokenType::STRING_LITERAL:
-            return std::make_shared<StringValue>(static_cast<StringLiteralToken&>(*token).getValue());
+            co_return std::make_shared<StringValue>(static_cast<StringLiteralToken&>(*token).getValue());
         case TokenType::IDENTIFIER:
-            return std::make_shared<SymbolValue>(static_cast<IdentifierToken&>(*token).getName());
+            co_return std::make_shared<SymbolValue>(static_cast<IdentifierToken&>(*token).getName());
         case TokenType::LEFT_PAREN:
-            return parseTails();
+            co_return co_await parseTails();
         case TokenType::QUOTE:
-            return Value::fromVector({std::make_shared<SymbolValue>("quote"), parse()});
+            co_return Value::fromVector({std::make_shared<SymbolValue>("quote"), co_await parse()});
         case TokenType::UNQUOTE:
-            return Value::fromVector({std::make_shared<SymbolValue>("unquote"), parse()});
+            co_return Value::fromVector({std::make_shared<SymbolValue>("unquote"), co_await parse()});
         case TokenType::QUASIQUOTE:
-            return Value::fromVector({std::make_shared<SymbolValue>("quasiquote"), parse()});
+            co_return Value::fromVector({std::make_shared<SymbolValue>("quasiquote"), co_await parse()});
         case TokenType::RIGHT_PAREN:
-            throw SyntaxError("Unexcepted ')'.");
+            throw SyntaxError("Unexpected ')'.");
         case TokenType::DOT:
             throw SyntaxError("Unexpected '.'.");
         default:
@@ -50,22 +35,23 @@ ValuePtr Parser::parse() {
     }
 }
 
-ValuePtr Parser::parseTails() {
-    if (safePeekTokenType() == TokenType::RIGHT_PAREN) {
-        tokens.pop_front();
-        return std::make_shared<NilValue>();
+Utils::Task<ValuePtr> Parser::parseTails() {
+    if (co_await tokenizer.awaitPeekNextToken() == TokenType::RIGHT_PAREN) {
+        co_await tokenizer.awaitNextToken(); // consume the right paren
+        co_return std::make_shared<NilValue>();
     }
 
-    auto car = this->parse();
-    if (safePeekTokenType() == TokenType::DOT) {
-        tokens.pop_front();
-        auto cdr = this->parse();
-        if (safePeekTokenType() != TokenType::RIGHT_PAREN) throw SyntaxError("Expected ')' after cdr.");
-
-        tokens.pop_front();
-        return std::make_shared<PairValue>(car, cdr);
+    auto car = co_await this->parse();
+    if (co_await tokenizer.awaitPeekNextToken() == TokenType::DOT) {
+        co_await tokenizer.awaitNextToken(); // consume the dot
+        auto cdr = co_await this->parse();
+        if (co_await tokenizer.awaitPeekNextToken() != TokenType::RIGHT_PAREN) {
+            throw SyntaxError("Expected ')' after cdr.");
+        }
+        co_await tokenizer.awaitNextToken(); // consume the right paren
+        co_return std::make_shared<PairValue>(car, cdr);
     } else {
-        auto cdr = this->parseTails();
-        return std::make_shared<PairValue>(car, cdr);
+        auto cdr = co_await this->parseTails();
+        co_return std::make_shared<PairValue>(car, cdr);
     }
-}
+} 
