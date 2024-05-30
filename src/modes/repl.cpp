@@ -7,10 +7,16 @@
 #include "repl.h"
 #include "../tokenizer.h"
 #include "../parser.h"
+#include "../version.h"
 
 void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<EvalEnv>& env, bool interactive) {
-    out << "Mini-Lisp 0.0.1 (coroutine, May 18 2024, 11:07:11) [GCC 14.1.1 20240507] on linux\n"
-                 "Type \"help\" for more information.\n";
+    out << std::format("Mini-Lisp {} ({}, {}, {}) [{} {}] on {}\n"
+                 "Type \"help\" for more information.\n",
+                       PROJECT_VERSION, PROJECT_GIT_BRANCH,
+                       PROJECT_COMPILE_DATE, PROJECT_COMPILE_TIME,
+                       PROJECT_CXX_COMPILER, PROJECT_CXX_COMPILER_VERSION,
+                       CMAKE_HOST_SYSTEM_NAME
+                       );
 
     while (true) {
         try {
