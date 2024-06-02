@@ -19,6 +19,13 @@ EvalEnv::EvalEnv(std::shared_ptr<EvalEnv> parent): parent{std::move(parent)}, sy
 }
 
 ValuePtr EvalEnv::eval(ValuePtr expr) {
+    evalStack.emplace(expr);
+    auto result = eval_impl(expr);
+    evalStack.pop();
+    return result;
+}
+
+ValuePtr EvalEnv::eval_impl(ValuePtr expr) {
     if (expr->is<SelfEvaluatingValue>()) {
         return expr;
     }

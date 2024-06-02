@@ -80,6 +80,21 @@ void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::o
             history.push_back(program);
             buffer.push_back(program);
         } catch (std::runtime_error &e) {
+            auto& evalStack = env->evalStack;
+            const int depth = 4;
+            int count = 0;
+
+            if (!evalStack.empty()) {
+                std::cerr << "Traceback (most recent call last):\n";
+                while (!evalStack.empty()) {
+                    if (count++ >= depth) break;
+                    auto top = evalStack.top();
+                    evalStack.pop();
+                    std::cerr << std::format("  At : {}", top->toString()) << std::endl;
+                }
+                while (!evalStack.empty()) evalStack.pop();
+            }
+
             std::cerr << "Error: " << e.what() << std::endl;
         }
     }

@@ -5,6 +5,8 @@
 #ifndef MINI_LISP_EVAL_ENV_H
 #define MINI_LISP_EVAL_ENV_H
 
+#include <stack>
+
 #include "value.h"
 
 class EvalEnv : public std::enable_shared_from_this<EvalEnv> {
@@ -24,12 +26,17 @@ public:
     void reset();
 
     ValuePtr eval(ValuePtr expr);
+
+    ValuePtr eval_impl(ValuePtr expr);
+
     std::vector<ValuePtr> evalList(ValuePtr expr);
 
     ValuePtr apply(const ValuePtr& proc, const std::vector<ValuePtr>& args);
 
     std::optional<ValuePtr> lookupBinding(const std::string& symbol) const;
     void defineBinding(const std::string& symbol, ValuePtr value);
+
+    std::stack<ValuePtr> evalStack;
 };
 
 #endif //MINI_LISP_EVAL_ENV_H
