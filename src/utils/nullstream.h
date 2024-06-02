@@ -18,4 +18,15 @@ const NullStream &operator<<(NullStream &&os, const T &value) {
     return os;
 }
 
+class NullFileStream : public std::ofstream {
+public:
+    NullFileStream() : std::ofstream(nullptr) {}
+    NullFileStream(const NullFileStream &) : std::ofstream(nullptr) {}
+};
+
+template<typename T>
+const NullFileStream &operator<<(NullFileStream &&os, const T &value) {
+    return os;
+}
+
 #endif //MINI_LISP_NULLSTREAM_H

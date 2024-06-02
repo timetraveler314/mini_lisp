@@ -7,6 +7,6 @@
 
 #include "../eval_env.h"
 
-void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<EvalEnv>& env, bool interactive = false);
+void startRepl(std::istream& in, std::ostream& out, std::shared_ptr<std::ostream> save, const std::shared_ptr<EvalEnv>& env, bool interactive = false);
 
 #endif //MINI_LISP_REPL_H

@@ -46,6 +46,8 @@ endif()
 
 add_subdirectory(test)
 
+add_test(NAME google_test COMMAND test_mini_lisp)
+
 #set(SOURCES_EXCLUDE_MAIN "${SOURCES}")
 #list(FILTER SOURCES_EXCLUDE_MAIN EXCLUDE REGEX "src/main.cpp")
 #add_executable(test_mini_lisp ${SOURCES_EXCLUDE_MAIN} test/test.cpp)

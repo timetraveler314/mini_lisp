@@ -9,7 +9,7 @@
 #include "../parser.h"
 #include "../version.h"
 
-void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<EvalEnv>& env, bool interactive) {
+void startRepl(std::istream& in, std::ostream& out, std::shared_ptr<std::ostream> save, const std::shared_ptr<EvalEnv>& env, bool interactive) {
     out << std::format("Mini-Lisp {} ({}, {}, {}) [{} {}] on {}\n"
                  "Type \"help\" for more information.\n",
                        PROJECT_VERSION, PROJECT_GIT_BRANCH,
@@ -17,16 +17,20 @@ void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<EvalEn
                        PROJECT_CXX_COMPILER, PROJECT_CXX_COMPILER_VERSION,
                        CMAKE_HOST_SYSTEM_NAME
                        );
-
+    std::vector<std::string> history;
+    std::deque<std::string> buffer;
     while (true) {
         try {
             Tokenizer tokenizer;
             Parser parser(tokenizer);
             auto valueTask = parser.parse();
 
+            std::string program;
+
             out << ">>> ";
             std::string line;
             std::getline(in, line);
+            program += line + "\n";
             if (in.eof()) return;
 
             if (interactive) {
@@ -48,12 +52,22 @@ void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<EvalEn
                     out << "Environment reset.\n";
                     continue;
                 }
+                if (line == "save") {
+                    std::cout << "Saving to file...\n";
+                    while (!buffer.empty()) {
+                        *save << buffer.front();
+                        buffer.pop_front();
+                    }
+                    save->flush();
+                    continue;
+                }
             }
 
             tokenizer.feed(line);
             while (!valueTask.ready()) {
                 out << "... ";
                 std::getline(in, line);
+                program += line + "\n";
                 if (in.eof()) {
                     in.clear();
                     throw EOFError("Unexpected EOF");
@@ -62,6 +76,9 @@ void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<EvalEn
             }
             auto result = env->eval(std::move(valueTask.get_result().value()));
             out << result->toString() << std::endl;
+
+            history.push_back(program);
+            buffer.push_back(program);
         } catch (std::runtime_error &e) {
             std::cerr << "Error: " << e.what() << std::endl;
         }

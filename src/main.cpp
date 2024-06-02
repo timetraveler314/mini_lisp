@@ -12,6 +12,7 @@ int main(int argc, char* argv[]) {
                                          "\"Practice of Software Design\", 2024 Spring");
     options.add_options()
             ("i,input", "Input file", cxxopts::value<std::string>())
+            ("s,save", "Save file", cxxopts::value<std::string>())
             ("r,repl", "Start repl mode (after file mode)")
             ;
 
@@ -19,6 +20,15 @@ int main(int argc, char* argv[]) {
         auto result = options.parse(argc, argv);
 
         std::shared_ptr<EvalEnv> env = EvalEnv::createGlobal();
+        std::shared_ptr<std::ofstream> save = std::make_shared<NullFileStream>();
+
+        if (result.count("save")) {
+            auto fileName = result["save"].as<std::string>();
+            save = std::make_shared<std::ofstream>(fileName);
+            if (!save->is_open()) {
+                throw std::runtime_error("Failed to open file: " + fileName);
+            }
+        }
 
         if (result.count("input")) {
             auto fileName = result["input"].as<std::string>();
@@ -31,18 +41,18 @@ int main(int argc, char* argv[]) {
             }
 
             auto null = NullStream();
-            startRepl(file, null, env);
+            startRepl(file, null, save, env);
 
             if (result.count("repl")) {
                 std::cout << std::endl;
                 std::cout << "Evaluated file " << fileName << ". ";
                 std::cout << "Entering REPL mode..." << std::endl;
-                startRepl(std::cin, std::cout, env, true);
+                startRepl(std::cin, std::cout, save, env, true);
             }
             return 0;
         }
 
-        startRepl(std::cin, std::cout, env, true);
+        startRepl(std::cin, std::cout, save, env, true);
         return 0;
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
