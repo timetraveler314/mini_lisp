@@ -292,39 +292,9 @@ ValuePtr Builtins::_remainder(const std::vector<ValuePtr> &params, EvalEnv &env)
 
 // Comparison functions
 
-bool Builtins::_builtin_equal(const ValuePtr& x, const ValuePtr& y) {
-    if (x->is<BooleanValue>()) {
-        return y->is<BooleanValue>() && *x->as<BooleanValue>() == *y->as<BooleanValue>();
-    } else if (x->is<NumericValue>()) {
-        return y->is<NumericValue>() && *x->as<NumericValue>() == *y->as<NumericValue>();
-    } else if (x->is<StringValue>()) {
-        return y->is<StringValue>() && *x->as<StringValue>() == *y->as<StringValue>();
-    } else if (x->is<SymbolValue>()) {
-        return y->is<SymbolValue>() && *(x->asSymbol()) == *(y->asSymbol());
-    } else if (x->is<NilValue>()) {
-        return y->is<NilValue>();
-    } else if (x->is<PairValue>()) {
-        auto xPair = std::dynamic_pointer_cast<PairValue>(x);
-        if (y->is<PairValue>()) {
-            auto yPair = std::dynamic_pointer_cast<PairValue>(y);
-            return _builtin_equal(xPair->getCar(), yPair->getCar()) && _builtin_equal(xPair->getCdr(), yPair->getCdr());
-        } else {
-            return false;
-        }
-    } else if (x->is<ProcedureValue>()) {
-        if (y->is<ProcedureValue>()) {
-            throw LispError("eq?: Comparing procedures is undefined.");
-        } else {
-            return false;
-        }
-    } else {
-        return false;
-    }
-}
-
 ValuePtr Builtins::_equal(const std::vector<ValuePtr>& params, EvalEnv& env) {
     Utils::checkParams("eq?", 2, params);
-    return std::make_shared<BooleanValue>(_builtin_equal(params[0], params[1]));
+    return std::make_shared<BooleanValue>(params[0]->isEqual(params[1]));
 }
 
 ValuePtr Builtins::_eq(const std::vector<ValuePtr>& params, EvalEnv& env) {
@@ -333,10 +303,8 @@ ValuePtr Builtins::_eq(const std::vector<ValuePtr>& params, EvalEnv& env) {
     auto y = params[1];
     bool result;
     if (x->is<BooleanValue>() || x->is<NumericValue>() || x->is<ProcedureValue>() || x->is<SymbolValue>() || x->is<NilValue>()) {
-        result = _builtin_equal(x, y);
-    } else if (x->is<StringValue>()) {
-        result = x == y;
-    } else if (x->is<PairValue>()) {
+        result = x->isEqual(y);
+    } else if (x->is<StringValue>() || x->is<PairValue>()) {
         result = x == y;
     } else {
         result = false;

@@ -89,7 +89,7 @@ void Tokenizer::feed(const std::string& str) {
     }
 }
 
-std::deque<TokenPtr> Tokenizer::__legacyTokenize(const std::string& input) {
+std::deque<TokenPtr> Tokenizer::_legacyTokenize_(const std::string& input) {
     Tokenizer tokenizer;
     tokenizer.input = input;
     std::deque<TokenPtr> tokens;

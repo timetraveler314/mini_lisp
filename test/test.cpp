@@ -128,6 +128,37 @@ TEST(ValueTest, FromVector) {
     EXPECT_EQ(resultNonEmpty->toString(), "(1 #t \"hello\" world)");
 }
 
+TEST(ValueTest, IsEqual) {
+    auto nilValue1 = std::make_shared<NilValue>();
+    auto nilValue2 = std::make_shared<NilValue>();
+    auto numericValue1 = std::make_shared<NumericValue>(3.14);
+    auto numericValue2 = std::make_shared<NumericValue>(3.14);
+    auto numericValue3 = std::make_shared<NumericValue>(2.71);
+
+    EXPECT_TRUE(nilValue1->isEqual(nilValue2));
+    EXPECT_TRUE(numericValue1->isEqual(numericValue2));
+    EXPECT_FALSE(nilValue1->isEqual(numericValue1));
+    EXPECT_FALSE(numericValue1->isEqual(nilValue1));
+
+    auto pairValue1 = std::make_shared<PairValue>(nilValue1, std::make_shared<PairValue>(numericValue1, nilValue2));
+    auto pairValue1_ = std::make_shared<PairValue>(nilValue1, std::make_shared<PairValue>(numericValue1, nilValue2));
+    auto pairValue2 = std::make_shared<PairValue>(nilValue1, std::make_shared<PairValue>(numericValue3, nilValue2));
+    EXPECT_TRUE(pairValue1->isEqual(pairValue1_));
+    EXPECT_FALSE(pairValue1->isEqual(pairValue2));
+
+    // LambdaValue : The implementation compares the address of the lambda environment
+    auto env = EvalEnv::createGlobal();
+    auto lambdaBody = std::vector<ValuePtr>();
+    auto lambdaParams1 = std::vector<std::string>{"xs"};
+    auto lambdaParams2 = std::vector<std::string>{"ys"};
+    auto lambdaValue1 = std::make_shared<LambdaValue>(env, lambdaParams1, lambdaBody);
+    auto lambdaValue2 = std::make_shared<LambdaValue>(env, lambdaParams1, lambdaBody);
+    auto lambdaValue3 = std::make_shared<LambdaValue>(env, lambdaParams2, lambdaBody);
+    EXPECT_TRUE(lambdaValue1->isEqual(lambdaValue1)); // Reflexive
+    EXPECT_FALSE(lambdaValue1->isEqual(lambdaValue2)); // Address comparison
+    EXPECT_FALSE(lambdaValue1->isEqual(lambdaValue3));
+}
+
 TEST(UtilsTest, RequireParams) {
     std::vector<ValuePtr> params = {
             std::make_shared<NumericValue>(1.0),

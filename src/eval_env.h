@@ -24,14 +24,12 @@ public:
     void reset();
 
     ValuePtr eval(ValuePtr expr);
-    ValuePtr apply(const ValuePtr& proc, const std::vector<ValuePtr>& args);
+    std::vector<ValuePtr> evalList(ValuePtr expr);
 
-    // std::vector<ValuePtr> evalList(ValuePtr expr);
+    ValuePtr apply(const ValuePtr& proc, const std::vector<ValuePtr>& args);
 
     std::optional<ValuePtr> lookupBinding(const std::string& symbol) const;
     void defineBinding(const std::string& symbol, ValuePtr value);
-
-    std::vector<ValuePtr> evalList(ValuePtr expr);
 };
 
 #endif //MINI_LISP_EVAL_ENV_H

@@ -62,7 +62,7 @@ namespace Utils {
             struct Awaiter {
                 Task& t;
 
-                Awaiter(Task& t) : t(t) {}
+                explicit Awaiter(Task& t) : t(t) {}
 
                 bool await_ready() {
                     return t.ret.has_value();

@@ -122,7 +122,7 @@ std::string PairValue::toString() const {
             ss << " ";
             current = pair;
         } else {
-            if (auto nil = dynamic_cast<const NilValue*>(current->cdr.get())) {
+            if (dynamic_cast<const NilValue*>(current->cdr.get())) {
                 ss << ")";
                 current = nullptr;
             } else {
@@ -133,6 +133,13 @@ std::string PairValue::toString() const {
     }
 
     return ss.str();
+}
+
+bool PairValue::isEqual(const ValuePtr &other) const {
+    if (auto ptr = std::dynamic_pointer_cast<PairValue>(other)) {
+        return car->isEqual(ptr->car) && cdr->isEqual(ptr->cdr);
+    }
+    return false;
 }
 
 std::string LambdaValue::toString() const {

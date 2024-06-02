@@ -75,7 +75,7 @@ public:
 
     Tokenizer() : pos(0), tokens(), input(), waiting() {}
 
-    static std::deque<TokenPtr> __legacyTokenize(const std::string &input);
+    static std::deque<TokenPtr> _legacyTokenize_(const std::string &input);
 };
 
 #endif

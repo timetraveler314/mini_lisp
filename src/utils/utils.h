@@ -30,44 +30,44 @@ namespace Utils {
     };
 
     template<size_t index>
-    inline void requireParamsImpl(const std::string& name, std::size_t total, const std::vector<ValuePtr>& params) {
+    void requireParamsImpl(const std::string& name, std::size_t total, const std::vector<ValuePtr>& params) {
         if (index != params.size()) {
             throw LispError(std::format("{}: expected {} arguments, but got {}", name, index, params.size()));
         }
     }
 
     template<size_t index, ValidTypePredicate Pred, ValidTypePredicate... Rest>
-    inline void requireParamsImpl(const std::string& name, std::size_t total, const std::vector<ValuePtr>& params, Pred pred, Rest... preds) {
+    void requireParamsImpl(const std::string& name, std::size_t total, const std::vector<ValuePtr>& params, Pred pred, Rest... preds) {
         if (index >= params.size()) throw LispError(std::format("{}: expected {} arguments, but got {}", name, total, params.size()));
         if (!pred(params[index])) throw LispError(std::format("{}: expected argument {} to be of type \"{}\"", name, index + 1, pred.name));
         requireParamsImpl<index + 1, Rest...>(name, total, params, preds...);
     }
 
     template<ValidTypePredicate... Preds>
-    inline void requireParams(const std::string& name, const std::vector<ValuePtr>& params, Preds... preds) {
+    void requireParams(const std::string& name, const std::vector<ValuePtr>& params, Preds... preds) {
         requireParamsImpl<0, Preds...>(name, sizeof...(preds), params, preds...);
     }
 
     template<size_t index>
-    inline std::tuple<> resolveParamsImpl(const std::string& name, std::size_t total, const std::vector<ValuePtr>& params) {
+    std::tuple<> resolveParamsImpl(const std::string& name, std::size_t total, const std::vector<ValuePtr>& params) {
         return {};
     }
 
     template<size_t index, ValidTypeResolver Resolver, ValidTypeResolver... Rest>
-    inline auto resolveParamsImpl(const std::string& name, std::size_t total, const std::vector<ValuePtr>& params, Resolver res, Rest... rest) {
+    auto resolveParamsImpl(const std::string& name, std::size_t total, const std::vector<ValuePtr>& params, Resolver res, Rest... rest) {
         if (index >= params.size()) throw LispError(std::format("{}: expected {} arguments, but got {}", name, total, params.size()));
         if (!res(params[index])) throw LispError(std::format("{}: expected argument {} to be of type \"{}\"", name, index + 1, res.name));
         return std::tuple_cat(std::tuple(res.resolve(params[index])), resolveParamsImpl<index + 1, Rest...>(name, total, params, rest...));
     }
 
     template<ValidTypeResolver... Resolvers>
-    inline auto resolveParams(const std::string& name, const std::vector<ValuePtr>& params, Resolvers... resolvers) {
+    auto resolveParams(const std::string& name, const std::vector<ValuePtr>& params, Resolvers... resolvers) {
         if (params.size() != sizeof...(resolvers)) throw LispError(std::format("{}: expected {} arguments, but got {}", name, sizeof...(resolvers), params.size()));
         return resolveParamsImpl<0, Resolvers...>(name, sizeof...(resolvers), params, resolvers...);
     }
 
     template<ValidTypeResolver Resolver>
-    inline auto resolveAllParams(const std::string& name, const std::vector<ValuePtr>& params, Resolver res) {
+    auto resolveAllParams(const std::string& name, const std::vector<ValuePtr>& params, Resolver res) {
         std::vector<typename Resolver::resolve_type> result;
         for (size_t i = 0; i < params.size(); ++i) {
             if (!res(params[i])) throw LispError(std::format("{}: expected argument {} to be of type \"{}\"", name, i + 1, res.name));

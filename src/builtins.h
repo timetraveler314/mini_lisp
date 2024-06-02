@@ -26,7 +26,7 @@ namespace Builtins {
 
     // 7.2 Type Predicates
     template<typename F>
-    inline BuiltinFuncType typeCheckerT(F f) {
+    BuiltinFuncType typeCheckerT(F f) {
         return [f](const std::vector<ValuePtr>& params, EvalEnv& env) {
             Utils::checkParams("builtin-type-checker", 1, 1, params);
             return std::make_shared<BooleanValue>(f(params[0]));

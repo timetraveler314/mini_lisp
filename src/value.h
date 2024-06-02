@@ -44,7 +44,7 @@ protected:
 public:
     virtual ~Value() = default;
 
-    inline ValueType getType() const {
+    ValueType getType() const {
         return type;
     }
 
@@ -73,6 +73,8 @@ public:
     std::optional<int> asInteger() const;
 
     static ValuePtr fromVector(const std::vector<ValuePtr>& values);
+
+    virtual bool isEqual(const ValuePtr& other) const = 0;
 };
 
 class SelfEvaluatingValue : virtual public Value {};
@@ -93,33 +95,52 @@ class ConcreteValue final : public SelfEvaluatingValue, public AtomicValue {
 public:
     using element_type = T;
 
-    explicit ConcreteValue(T value): Value(value_type), value{value} {}
+    explicit ConcreteValue(T value):
+        Value(value_type), SelfEvaluatingValue(), AtomicValue(), value{value} {}
 
     T getValue() const {
         return value;
     }
 
     std::string toString() const override;
+
+    bool isEqual(const ValuePtr& other) const override {
+        if (auto ptr = std::dynamic_pointer_cast<ConcreteValue>(other)) {
+            return value == ptr->getValue();
+        }
+        return false;
+    }
 };
 
 class NilValue final : public AtomicValue {
 public:
-    NilValue(): Value(ValueType::NIL_VALUE) {}
+    NilValue(): Value(ValueType::NIL_VALUE), AtomicValue() {}
 
     std::string toString() const override;
+
+    bool isEqual(const ValuePtr& other) const override {
+        return other->is<NilValue>();
+    }
 };
 
 class SymbolValue final : public AtomicValue {
     std::string name;
 
 public:
-    explicit SymbolValue(std::string name): Value(ValueType::SYMBOL_VALUE), name{std::move(name)} {}
+    explicit SymbolValue(std::string name): Value(ValueType::SYMBOL_VALUE), AtomicValue(), name{std::move(name)} {}
 
     inline std::string getValue() const {
         return name;
     }
 
     std::string toString() const override;
+
+    bool isEqual(const ValuePtr& other) const override {
+        if (auto ptr = std::dynamic_pointer_cast<SymbolValue>(other)) {
+            return name == ptr->getValue();
+        }
+        return false;
+    }
 };
 
 class PairValue final : public Value {
@@ -138,6 +159,8 @@ public:
     }
 
     std::string toString() const override;
+
+    bool isEqual(const ValuePtr& other) const override;
 };
 
 class ProcedureValue : virtual public Value {};
@@ -146,7 +169,8 @@ class BuiltinProcValue final : public ProcedureValue {
     BuiltinFuncType func;
 
 public:
-    explicit BuiltinProcValue(BuiltinFuncType func): Value(ValueType::BUILTIN_PROC_VALUE), func{std::move(func)} {}
+    explicit BuiltinProcValue(BuiltinFuncType func):
+        Value(ValueType::BUILTIN_PROC_VALUE), ProcedureValue(), func{std::move(func)} {}
 
     inline ValuePtr apply(const std::vector<ValuePtr>& params, EvalEnv& env) {
         return func(params, env);
@@ -154,6 +178,10 @@ public:
 
     inline std::string toString() const override {
         return "#<procedure>";
+    }
+
+    bool isEqual(const ValuePtr &other) const override {
+        return this == other.get();
     }
 };
 
@@ -164,11 +192,16 @@ private:
     std::vector<ValuePtr> body;
 
 public:
-    LambdaValue(std::shared_ptr<EvalEnv> env, std::vector<std::string> params, std::vector<ValuePtr> body): Value(ValueType::LAMBDA_VALUE), env{std::move(env)}, params{std::move(params)}, body{std::move(body)} {}
+    LambdaValue(std::shared_ptr<EvalEnv> env, std::vector<std::string> params, std::vector<ValuePtr> body):
+        Value(ValueType::LAMBDA_VALUE), ProcedureValue(), env{std::move(env)}, params{std::move(params)}, body{std::move(body)} {}
 
     std::string toString() const override;
 
     ValuePtr apply(const std::vector<ValuePtr>& args);
+
+    bool isEqual(const ValuePtr &other) const override {
+        return this == other.get();
+    }
 };
 
 #endif //MINI_LISP_VALUE_H

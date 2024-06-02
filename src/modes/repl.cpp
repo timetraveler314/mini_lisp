@@ -9,7 +9,7 @@
 #include "../parser.h"
 #include "../version.h"
 
-void startRepl(std::istream& in, std::ostream& out, std::shared_ptr<std::ostream> save, const std::shared_ptr<EvalEnv>& env, bool interactive) {
+void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::ostream>& save, const std::shared_ptr<EvalEnv>& env, bool interactive) {
     out << std::format("Mini-Lisp {} ({}, {}, {}) [{} {}] on {}\n"
                  "Type \"help\" for more information.\n",
                        PROJECT_VERSION, PROJECT_GIT_BRANCH,
