@@ -11,14 +11,19 @@ const std::set<char> TOKEN_END{'(', ')', '\'', '`', ',', '"'};
 TokenPtr Tokenizer::tokenizeNext(int& pos) {
     while (pos < input.size()) {
         auto c = input[pos];
+        position.nextColumn();
         if (c == ';') {
             while (pos < input.size() && input[pos] != '\n') {
                 pos++;
             }
         } else if (std::isspace(c)) {
+            if (c == '\n') {
+                position.newLine();
+            }
             pos++;
         } else if (auto token = Token::fromChar(c)) {
             pos++;
+            token->position = position;
             return token;
         } else if (c == '#') {
             if (auto result = BooleanLiteralToken::fromChar(input[pos + 1])) {

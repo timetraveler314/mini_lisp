@@ -8,6 +8,10 @@
 #include <utility>
 
 #include "eval_env.h"
+
+#include <iostream>
+#include <sstream>
+
 #include "error.h"
 #include "builtins.h"
 #include "forms.h"
@@ -90,6 +94,47 @@ std::optional<ValuePtr> EvalEnv::lookupBinding(const std::string& symbol) const 
 
 void EvalEnv::defineBinding(const std::string &symbol, ValuePtr value) {
     symbolTable[symbol] = std::move(value);
+}
+
+std::string EvalEnv::generateStackTrace(int depth) {
+    int count = 0;
+    std::stringstream ss;
+    while (!evalStack.empty()) {
+        if (count++ >= depth) break;
+        auto top = evalStack.top();
+        evalStack.pop();
+
+        if (auto pair = std::dynamic_pointer_cast<PairValue>(top)) {
+            if (pair->position) {
+                ss << std::format("At: Line {}, column {}\n", pair->position->line, pair->position->column);
+                ss << "  " << pair->toString() << std::endl;
+            }
+        }
+
+        std::cout << "Debug: " << top->toString() << std::endl;
+    }
+
+    return ss.str();
+}
+
+void EvalEnv::clearStack() {
+    while (!evalStack.empty()) evalStack.pop();
+}
+
+void EvalEnv::pushStack(ValuePtr value) {
+    auto env = shared_from_this();
+    while (env) {
+        env->evalStack.push(value);
+        env = env->parent;
+    }
+}
+
+void EvalEnv::popStack() {
+    auto env = shared_from_this();
+    while (env) {
+        env->evalStack.pop();
+        env = env->parent;
+    }
 }
 
 std::shared_ptr<EvalEnv>

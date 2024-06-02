@@ -9,6 +9,12 @@
 #include "../parser.h"
 #include "../version.h"
 
+void getInput(std::istream &in, std::ostream &out, std::string &program, std::string &line) {
+    std::getline(in, line);
+    line += "\n"; // Compensate for the trailing newline
+    program += line;
+}
+
 void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::ostream>& save, const std::shared_ptr<EvalEnv>& env, bool interactive) {
     out << std::format("Mini-Lisp {} ({}, {}, {}) [{} {}] on {}\n"
                  "Type \"help\" for more information.\n",
@@ -19,18 +25,20 @@ void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::o
                        );
     std::vector<std::string> history;
     std::deque<std::string> buffer;
+    int lineCount = 1;
+
     while (true) {
         try {
             Tokenizer tokenizer;
+            if (!interactive) tokenizer.setLineCount(lineCount);
             Parser parser(tokenizer);
             auto valueTask = parser.parse();
 
             std::string program;
 
-            out << ">>> ";
             std::string line;
-            std::getline(in, line);
-            program += line + "\n";
+            out << ">>> ";
+            getInput(in, out, program, line);
             if (in.eof()) return;
 
             if (interactive) {
@@ -66,8 +74,7 @@ void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::o
             tokenizer.feed(line);
             while (!valueTask.ready()) {
                 out << "... ";
-                std::getline(in, line);
-                program += line + "\n";
+                getInput(in, out, program, line);
                 if (in.eof()) {
                     in.clear();
                     throw EOFError("Unexpected EOF");
@@ -77,25 +84,19 @@ void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::o
             auto result = env->eval(std::move(valueTask.get_result().value()));
             out << result->toString() << std::endl;
 
+            lineCount = tokenizer.getLineCount();
+
             history.push_back(program);
             buffer.push_back(program);
         } catch (std::runtime_error &e) {
-            auto& evalStack = env->evalStack;
-            const int depth = 4;
-            int count = 0;
-
-            if (!evalStack.empty()) {
+            if (!env->isStackEmpty()) {
                 std::cerr << "Traceback (most recent call last):\n";
-                while (!evalStack.empty()) {
-                    if (count++ >= depth) break;
-                    auto top = evalStack.top();
-                    evalStack.pop();
-                    std::cerr << std::format("  At : {}", top->toString()) << std::endl;
-                }
-                while (!evalStack.empty()) evalStack.pop();
+                std::cerr << env->generateStackTrace(5);
+                env->clearStack();
             }
-
             std::cerr << "Error: " << e.what() << std::endl;
+
+            if (!interactive) std::exit(1);
         }
     }
 }

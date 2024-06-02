@@ -13,21 +13,24 @@ class EvalEnv : public std::enable_shared_from_this<EvalEnv> {
     std::shared_ptr<EvalEnv> parent;
     std::unordered_map<std::string, ValuePtr> symbolTable;
 
+    std::stack<ValuePtr> evalStack;
+
     explicit EvalEnv(std::shared_ptr<EvalEnv> parent);
+    ValuePtr eval_impl(ValuePtr expr);
 
 public:
-    inline static std::shared_ptr<EvalEnv> createGlobal() {
+    static std::shared_ptr<EvalEnv> createGlobal() {
         return std::shared_ptr<EvalEnv>(new EvalEnv(nullptr));
     }
     std::shared_ptr<EvalEnv> createChild(const std::vector<std::string>& params, const std::vector<ValuePtr>& args);
 
-    void addSymbol(const std::string& symbol, ValuePtr value);
+    bool isGlobal() const {
+        return parent == nullptr;
+    }
 
     void reset();
 
     ValuePtr eval(ValuePtr expr);
-
-    ValuePtr eval_impl(ValuePtr expr);
 
     std::vector<ValuePtr> evalList(ValuePtr expr);
 
@@ -36,7 +39,13 @@ public:
     std::optional<ValuePtr> lookupBinding(const std::string& symbol) const;
     void defineBinding(const std::string& symbol, ValuePtr value);
 
-    std::stack<ValuePtr> evalStack;
+    bool isStackEmpty() const {
+        return evalStack.empty();
+    }
+    std::string generateStackTrace(int depth);
+    void clearStack();
+    void pushStack(ValuePtr value);
+    void popStack();
 };
 
 #endif //MINI_LISP_EVAL_ENV_H

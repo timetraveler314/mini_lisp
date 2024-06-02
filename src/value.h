@@ -11,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+#include "token.h"
+
 enum class ValueType {
     BOOLEAN_VALUE,
     NUMERIC_VALUE,
@@ -148,6 +150,8 @@ class PairValue final : public Value {
     ValuePtr cdr;
 
 public:
+    std::optional<TokenPosition> position = std::nullopt;
+
     PairValue(const ValuePtr& car, const ValuePtr& cdr): Value(ValueType::PAIR_VALUE), car{car}, cdr{cdr} {}
 
     ValuePtr getCar() const {
