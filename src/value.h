@@ -191,6 +191,7 @@ public:
 
 class LambdaValue final : public ProcedureValue {
 private:
+    std::optional<std::string> name;
     std::shared_ptr<EvalEnv> env;
     std::vector<std::string> params;
     std::vector<ValuePtr> body;
@@ -199,12 +200,20 @@ public:
     LambdaValue(std::shared_ptr<EvalEnv> env, std::vector<std::string> params, std::vector<ValuePtr> body):
         Value(ValueType::LAMBDA_VALUE), ProcedureValue(), env{std::move(env)}, params{std::move(params)}, body{std::move(body)} {}
 
+    LambdaValue(std::shared_ptr<EvalEnv> env, std::vector<std::string> params, std::vector<ValuePtr> body, std::string name):
+        Value(ValueType::LAMBDA_VALUE), ProcedureValue(), name{std::move(name)}, env{std::move(env)}, params{std::move(params)}, body{std::move(body)} {}
+
+
     std::string toString() const override;
 
     ValuePtr apply(const std::vector<ValuePtr>& args);
 
     bool isEqual(const ValuePtr &other) const override {
         return this == other.get();
+    }
+
+    std::string getName() const {
+        return name.value_or("(unnamed)");
     }
 };
 

@@ -88,14 +88,16 @@ void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::o
 
             history.push_back(program);
             buffer.push_back(program);
-        } catch (std::runtime_error &e) {
-            if (!env->isStackEmpty()) {
-                std::cerr << "Traceback (most recent call last):\n";
-                std::cerr << env->generateStackTrace(5);
-                env->clearStack();
-            }
+        } catch (LispErrorWithEnv& e) {
+            auto errorEnv = e.getEnv();
+            std::cerr << "Traceback (most recent call last):\n";
+            std::cerr << errorEnv->generateStackTrace(5);
+            errorEnv->clearStack();
             std::cerr << "Error: " << e.what() << std::endl;
 
+            if (!interactive) std::exit(1);
+        } catch (std::runtime_error& e) {
+            std::cerr << "Error: " << e.what() << std::endl;
             if (!interactive) std::exit(1);
         }
     }

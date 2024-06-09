@@ -10,6 +10,8 @@
 #include "value.h"
 
 class EvalEnv : public std::enable_shared_from_this<EvalEnv> {
+    std::optional<std::string> name;
+
     std::shared_ptr<EvalEnv> parent;
     std::unordered_map<std::string, ValuePtr> symbolTable;
 
@@ -22,7 +24,9 @@ public:
     static std::shared_ptr<EvalEnv> createGlobal() {
         return std::shared_ptr<EvalEnv>(new EvalEnv(nullptr));
     }
+
     std::shared_ptr<EvalEnv> createChild(const std::vector<std::string>& params, const std::vector<ValuePtr>& args);
+    std::shared_ptr<EvalEnv> createChild(const std::vector<std::string>& params, const std::vector<ValuePtr>& args, const std::string& name);
 
     bool isGlobal() const {
         return parent == nullptr;
@@ -46,6 +50,10 @@ public:
     void clearStack();
     void pushStack(ValuePtr value);
     void popStack();
+
+    std::string getName() const {
+        return name.value_or("(unnamed)");
+    }
 };
 
 #endif //MINI_LISP_EVAL_ENV_H

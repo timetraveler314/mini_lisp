@@ -23,10 +23,14 @@ EvalEnv::EvalEnv(std::shared_ptr<EvalEnv> parent): parent{std::move(parent)}, sy
 }
 
 ValuePtr EvalEnv::eval(ValuePtr expr) {
-    evalStack.emplace(expr);
-    auto result = eval_impl(expr);
-    evalStack.pop();
-    return result;
+    try {
+        evalStack.emplace(expr);
+        auto result = eval_impl(expr);
+        evalStack.pop();
+        return result;
+    } catch (LispError& e) {
+        throw LispErrorWithEnv(e.what(), shared_from_this());
+    }
 }
 
 ValuePtr EvalEnv::eval_impl(ValuePtr expr) {
@@ -99,26 +103,50 @@ void EvalEnv::defineBinding(const std::string &symbol, ValuePtr value) {
 std::string EvalEnv::generateStackTrace(int depth) {
     int count = 0;
     std::stringstream ss;
-    while (!evalStack.empty()) {
-        if (count++ >= depth) break;
-        auto top = evalStack.top();
-        evalStack.pop();
+
+    std::shared_ptr<EvalEnv> env = shared_from_this();
+    while (env && count < depth) {
+        auto top = env->evalStack.top();
+        env->evalStack.pop();
 
         if (auto pair = std::dynamic_pointer_cast<PairValue>(top)) {
             if (pair->position) {
-                ss << std::format("At: Line {}, column {}\n", pair->position->line, pair->position->column);
+                if (!env->isGlobal()) {
+                    ss << std::format("In environment: {}\n", env->getName());
+                }
+                ss << std::format("At: line {}, column {}\n", pair->position->line, pair->position->column);
                 ss << "  " << pair->toString() << std::endl;
             }
         }
 
-        std::cout << "Debug: " << top->toString() << std::endl;
+        count++;
+        env = env->parent;
     }
+
+    // while (!evalStack.empty()) {
+    //     if (count++ >= depth) break;
+    //     auto top = evalStack.top();
+    //     evalStack.pop();
+    //
+    //     if (auto pair = std::dynamic_pointer_cast<PairValue>(top)) {
+    //         if (pair->position) {
+    //             ss << std::format("At: Line {}, column {}\n", pair->position->line, pair->position->column);
+    //             ss << "  " << pair->toString() << std::endl;
+    //         }
+    //     }
+    //
+    //     std::cout << "Debug: " << top->toString() << std::endl;
+    // }
 
     return ss.str();
 }
 
 void EvalEnv::clearStack() {
     while (!evalStack.empty()) evalStack.pop();
+
+    if (parent) {
+        parent->clearStack();
+    }
 }
 
 void EvalEnv::pushStack(ValuePtr value) {
@@ -147,6 +175,13 @@ EvalEnv::createChild(const std::vector<std::string> &params, const std::vector<V
     for (size_t i = 0; i < params.size(); ++i) {
         child->defineBinding(params[i], args[i]);
     }
+    return child;
+}
+
+std::shared_ptr<EvalEnv> EvalEnv::createChild(const std::vector<std::string> &params, const std::vector<ValuePtr> &args,
+    const std::string &name) {
+    auto child = createChild(params, args);
+    child->name = name;
     return child;
 }
 

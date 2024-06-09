@@ -151,7 +151,7 @@ ValuePtr LambdaValue::apply(const std::vector<ValuePtr> &args) {
         throw LispError("Procedure expected " + std::to_string(params.size()) + " arguments, but got " + std::to_string(args.size()));
     }
 
-    auto lambdaEnv = env->createChild(params, args);
+    auto lambdaEnv = env->createChild(params, args, getName());
     ValuePtr evalResult;
     for (const auto& expr : body) {
         evalResult = lambdaEnv->eval(expr);
