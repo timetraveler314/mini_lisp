@@ -167,7 +167,10 @@ public:
     bool isEqual(const ValuePtr& other) const override;
 };
 
-class ProcedureValue : virtual public Value {};
+class ProcedureValue : virtual public Value {
+public:
+    virtual ValuePtr apply(const std::vector<ValuePtr>&, EvalEnv&) = 0;
+};
 
 class BuiltinProcValue final : public ProcedureValue {
     BuiltinFuncType func;
@@ -176,7 +179,7 @@ public:
     explicit BuiltinProcValue(BuiltinFuncType func):
         Value(ValueType::BUILTIN_PROC_VALUE), ProcedureValue(), func{std::move(func)} {}
 
-    inline ValuePtr apply(const std::vector<ValuePtr>& params, EvalEnv& env) {
+    inline ValuePtr apply(const std::vector<ValuePtr>& params, EvalEnv& env) override {
         return func(params, env);
     }
 
@@ -206,14 +209,14 @@ public:
 
     std::string toString() const override;
 
-    ValuePtr apply(const std::vector<ValuePtr>& args);
+    ValuePtr apply(const std::vector<ValuePtr>& args, EvalEnv& currentEnv) override;
 
     bool isEqual(const ValuePtr &other) const override {
         return this == other.get();
     }
 
     std::string getName() const {
-        return name.value_or("(unnamed)");
+        return name.value_or("<anonymous>");
     }
 };
 

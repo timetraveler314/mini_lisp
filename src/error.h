@@ -20,10 +20,10 @@ public:
     using runtime_error::runtime_error;
 };
 
-class LispErrorWithEnv : public std::runtime_error {
+class LispErrorWithEnv : public LispError {
     std::shared_ptr<EvalEnv> env;
 public:
-    LispErrorWithEnv(const std::string& what, std::shared_ptr<EvalEnv> env) : std::runtime_error(what), env(std::move(env)) {}
+    LispErrorWithEnv(const std::string& what, std::shared_ptr<EvalEnv> env) : LispError(what), env(std::move(env)) {}
 
     std::shared_ptr<EvalEnv> getEnv();
 };

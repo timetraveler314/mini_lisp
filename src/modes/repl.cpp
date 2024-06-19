@@ -16,6 +16,9 @@ void getInput(std::istream &in, std::ostream &out, std::string &program, std::st
 }
 
 void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::ostream>& save, const std::shared_ptr<EvalEnv>& env, bool interactive) {
+    // Show banner
+    out << "MINI-LISP : Minilisp Is Not Implemented Like In Standard Practice" << std::endl;
+
     out << std::format("Mini-Lisp {} ({}, {}, {}) [{} {}] on {}\n"
                  "Type \"help\" for more information.\n",
                        PROJECT_VERSION, PROJECT_GIT_BRANCH,

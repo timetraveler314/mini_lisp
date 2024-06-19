@@ -146,12 +146,12 @@ std::string LambdaValue::toString() const {
     return "#<procedure>";
 }
 
-ValuePtr LambdaValue::apply(const std::vector<ValuePtr> &args) {
+ValuePtr LambdaValue::apply(const std::vector<ValuePtr> &args, EvalEnv& currentEnv) {
     if (args.size() != params.size()) {
         throw LispError("Procedure expected " + std::to_string(params.size()) + " arguments, but got " + std::to_string(args.size()));
     }
 
-    auto lambdaEnv = env->createChild(params, args, getName());
+    auto lambdaEnv = env->createChild(params, args, getName(), currentEnv.shared_from_this());
     ValuePtr evalResult;
     for (const auto& expr : body) {
         evalResult = lambdaEnv->eval(expr);
