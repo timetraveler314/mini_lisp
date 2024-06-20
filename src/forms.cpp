@@ -42,7 +42,7 @@ namespace SpecialForms {
                     }
                     return *s;
                 });
-                std::vector<std::string> lambdaParams(viewLambdaParams.begin(), viewLambdaParams.end());
+                std::vector lambdaParams(viewLambdaParams.begin(), viewLambdaParams.end());
 
                 auto lambdaBody = std::vector(params.begin() + 1, params.end());
                 env.defineBinding(*symbol, std::make_shared<LambdaValue>(env.shared_from_this(), std::move(lambdaParams), std::move(lambdaBody), *symbol));
@@ -182,7 +182,7 @@ namespace SpecialForms {
                 }
             } else throw LispError("let: Expected symbol in the binding list.");
         }
-        auto childEnv = env.createChild(letParams, letValues);
+        auto childEnv = env.createChild(letParams, letValues, env.shared_from_this());
 
         ValuePtr result;
         for (size_t i = 1; i < params.size(); i++) {

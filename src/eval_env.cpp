@@ -152,24 +152,8 @@ void EvalEnv::clearStack() {
     }
 }
 
-void EvalEnv::pushStack(ValuePtr value) {
-    auto env = shared_from_this();
-    while (env) {
-        env->evalStack.push(value);
-        env = env->parent;
-    }
-}
-
-void EvalEnv::popStack() {
-    auto env = shared_from_this();
-    while (env) {
-        env->evalStack.pop();
-        env = env->parent;
-    }
-}
-
 std::shared_ptr<EvalEnv>
-EvalEnv::createChild(const std::vector<std::string> &params, const std::vector<ValuePtr> &args, std::shared_ptr<EvalEnv> runtimeParent) {
+EvalEnv::createChild(const std::vector<std::string> &params, const std::vector<ValuePtr> &args, const std::shared_ptr<EvalEnv>& runtimeParent) {
     if (params.size() != args.size()) {
         throw LispError("Child EvalEnv parameter count mismatch.");
     }
@@ -183,7 +167,7 @@ EvalEnv::createChild(const std::vector<std::string> &params, const std::vector<V
 }
 
 std::shared_ptr<EvalEnv> EvalEnv::createChild(const std::vector<std::string> &params, const std::vector<ValuePtr> &args,
-    const std::string &name, std::shared_ptr<EvalEnv> runtimeParent) {
+                                              const std::string &name, const std::shared_ptr<EvalEnv> &runtimeParent) {
     auto child = createChild(params, args, runtimeParent);
     child->name = name;
     return child;
