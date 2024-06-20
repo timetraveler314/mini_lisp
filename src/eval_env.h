@@ -5,31 +5,55 @@
 #ifndef MINI_LISP_EVAL_ENV_H
 #define MINI_LISP_EVAL_ENV_H
 
+#include <stack>
+
 #include "value.h"
 
 class EvalEnv : public std::enable_shared_from_this<EvalEnv> {
+    std::optional<std::string> name;
+
     std::shared_ptr<EvalEnv> parent;
+    std::shared_ptr<EvalEnv> runtimeParent;
     std::unordered_map<std::string, ValuePtr> symbolTable;
 
+    std::stack<ValuePtr> evalStack;
+
     explicit EvalEnv(std::shared_ptr<EvalEnv> parent);
+    ValuePtr eval_impl(ValuePtr expr);
 
 public:
-    inline static std::shared_ptr<EvalEnv> createGlobal() {
+    static std::shared_ptr<EvalEnv> createGlobal() {
         return std::shared_ptr<EvalEnv>(new EvalEnv(nullptr));
     }
-    std::shared_ptr<EvalEnv> createChild(const std::vector<std::string>& params, const std::vector<ValuePtr>& args);
 
-    void addSymbol(const std::string& symbol, ValuePtr value);
+    std::shared_ptr<EvalEnv> createChild(const std::vector<std::string>& params, const std::vector<ValuePtr>& args, const std::shared_ptr<EvalEnv>& runtimeParent = nullptr);
+    std::shared_ptr<EvalEnv> createChild(const std::vector<std::string>& params, const std::vector<ValuePtr>& args, const std::string& name, const std::
+                                         shared_ptr<EvalEnv> &runtimeParent = nullptr);
+
+    bool isGlobal() const {
+        return parent == nullptr;
+    }
 
     void reset();
 
     ValuePtr eval(ValuePtr expr);
+
     std::vector<ValuePtr> evalList(ValuePtr expr);
 
     ValuePtr apply(const ValuePtr& proc, const std::vector<ValuePtr>& args);
 
     std::optional<ValuePtr> lookupBinding(const std::string& symbol) const;
     void defineBinding(const std::string& symbol, ValuePtr value);
+
+    bool isStackEmpty() const {
+        return evalStack.empty();
+    }
+    std::string generateStackTrace(int depth);
+    void clearStack();
+
+    std::string getName() const {
+        return name.value_or("<anonymous>");
+    }
 };
 
 #endif //MINI_LISP_EVAL_ENV_H

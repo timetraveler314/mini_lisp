@@ -11,6 +11,7 @@
 class Tokenizer {
 private:
     int pos;
+    TokenPosition position = {1, 0};
     std::string input;
     std::deque<TokenPtr> tokens;
     std::queue<std::coroutine_handle<>> waiting;
@@ -74,6 +75,14 @@ public:
     }
 
     Tokenizer() : pos(0), tokens(), input(), waiting() {}
+
+    void setLineCount(int line) {
+        position.line = line;
+    }
+
+    int getLineCount() const {
+        return position.line;
+    }
 
     static std::deque<TokenPtr> _legacyTokenize_(const std::string &input);
 };

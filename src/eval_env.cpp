@@ -8,6 +8,10 @@
 #include <utility>
 
 #include "eval_env.h"
+
+#include <iostream>
+#include <sstream>
+
 #include "error.h"
 #include "builtins.h"
 #include "forms.h"
@@ -19,6 +23,19 @@ EvalEnv::EvalEnv(std::shared_ptr<EvalEnv> parent): parent{std::move(parent)}, sy
 }
 
 ValuePtr EvalEnv::eval(ValuePtr expr) {
+    try {
+        evalStack.emplace(expr);
+        auto result = eval_impl(expr);
+        evalStack.pop();
+        return result;
+    } catch (LispErrorWithEnv&) {
+        throw; // Rethrow if already wrapped
+    } catch (LispError& e) {
+        throw LispErrorWithEnv(e.what(), shared_from_this()); // Wrap the error with the current environment
+    }
+}
+
+ValuePtr EvalEnv::eval_impl(ValuePtr expr) {
     if (expr->is<SelfEvaluatingValue>()) {
         return expr;
     }
@@ -62,13 +79,10 @@ std::vector<ValuePtr> EvalEnv::evalList(ValuePtr expr) {
 }
 
 ValuePtr EvalEnv::apply(const ValuePtr& proc, const std::vector<ValuePtr>& args) {
-    if (auto builtin = std::dynamic_pointer_cast<BuiltinProcValue>(proc)) {
-        return builtin->apply(args, *this);
-    } else if (auto lambda = std::dynamic_pointer_cast<LambdaValue>(proc)) {
-        return lambda->apply(args);
-    } else {
-        throw LispError("Not a procedure: " + proc->toString());
+    if (auto procValue = std::dynamic_pointer_cast<ProcedureValue>(proc)) {
+        return procValue->apply(args, *this);
     }
+    throw LispError("Not a procedure: " + proc->toString());
 }
 
 std::optional<ValuePtr> EvalEnv::lookupBinding(const std::string& symbol) const {
@@ -85,16 +99,77 @@ void EvalEnv::defineBinding(const std::string &symbol, ValuePtr value) {
     symbolTable[symbol] = std::move(value);
 }
 
+std::string EvalEnv::generateStackTrace(int depth) {
+    int count = 0;
+    std::stringstream ss;
+
+    std::shared_ptr<EvalEnv> env = shared_from_this();
+    while (env && count < depth) {
+        auto top = env->evalStack.top();
+        env->evalStack.pop();
+
+        if (auto pair = std::dynamic_pointer_cast<PairValue>(top)) {
+            if (pair->position) {
+                if (!env->isGlobal()) {
+                    ss << std::format("In environment: {}\n", env->getName());
+                }
+
+                ss << std::format("At: line {}, column {}\n", pair->position->line, pair->position->column);
+
+                if (pair->position->column > 3) {
+                    ss << "  ... " << pair->toString() << std::endl;
+                } else ss << "  " << pair->toString() << std::endl;
+            }
+        }
+
+        count++;
+        env = env->runtimeParent;
+    }
+
+    // while (!evalStack.empty()) {
+    //     if (count++ >= depth) break;
+    //     auto top = evalStack.top();
+    //     evalStack.pop();
+    //
+    //     if (auto pair = std::dynamic_pointer_cast<PairValue>(top)) {
+    //         if (pair->position) {
+    //             ss << std::format("At: Line {}, column {}\n", pair->position->line, pair->position->column);
+    //             ss << "  " << pair->toString() << std::endl;
+    //         }
+    //     }
+    //
+    //     std::cout << "Debug: " << top->toString() << std::endl;
+    // }
+
+    return ss.str();
+}
+
+void EvalEnv::clearStack() {
+    while (!evalStack.empty()) evalStack.pop();
+
+    if (parent) {
+        parent->clearStack();
+    }
+}
+
 std::shared_ptr<EvalEnv>
-EvalEnv::createChild(const std::vector<std::string> &params, const std::vector<ValuePtr> &args) {
+EvalEnv::createChild(const std::vector<std::string> &params, const std::vector<ValuePtr> &args, const std::shared_ptr<EvalEnv>& runtimeParent) {
     if (params.size() != args.size()) {
         throw LispError("Child EvalEnv parameter count mismatch.");
     }
     auto child = EvalEnv::createGlobal();
     child->parent = shared_from_this();
+    child->runtimeParent = runtimeParent;
     for (size_t i = 0; i < params.size(); ++i) {
         child->defineBinding(params[i], args[i]);
     }
+    return child;
+}
+
+std::shared_ptr<EvalEnv> EvalEnv::createChild(const std::vector<std::string> &params, const std::vector<ValuePtr> &args,
+                                              const std::string &name, const std::shared_ptr<EvalEnv> &runtimeParent) {
+    auto child = createChild(params, args, runtimeParent);
+    child->name = name;
     return child;
 }
 

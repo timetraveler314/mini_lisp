@@ -11,6 +11,8 @@
 #include <utility>
 #include <vector>
 
+#include "token.h"
+
 enum class ValueType {
     BOOLEAN_VALUE,
     NUMERIC_VALUE,
@@ -148,6 +150,8 @@ class PairValue final : public Value {
     ValuePtr cdr;
 
 public:
+    std::optional<TokenPosition> position = std::nullopt;
+
     PairValue(const ValuePtr& car, const ValuePtr& cdr): Value(ValueType::PAIR_VALUE), car{car}, cdr{cdr} {}
 
     ValuePtr getCar() const {
@@ -163,7 +167,10 @@ public:
     bool isEqual(const ValuePtr& other) const override;
 };
 
-class ProcedureValue : virtual public Value {};
+class ProcedureValue : virtual public Value {
+public:
+    virtual ValuePtr apply(const std::vector<ValuePtr>&, EvalEnv&) = 0;
+};
 
 class BuiltinProcValue final : public ProcedureValue {
     BuiltinFuncType func;
@@ -172,7 +179,7 @@ public:
     explicit BuiltinProcValue(BuiltinFuncType func):
         Value(ValueType::BUILTIN_PROC_VALUE), ProcedureValue(), func{std::move(func)} {}
 
-    inline ValuePtr apply(const std::vector<ValuePtr>& params, EvalEnv& env) {
+    inline ValuePtr apply(const std::vector<ValuePtr>& params, EvalEnv& env) override {
         return func(params, env);
     }
 
@@ -187,6 +194,7 @@ public:
 
 class LambdaValue final : public ProcedureValue {
 private:
+    std::optional<std::string> name;
     std::shared_ptr<EvalEnv> env;
     std::vector<std::string> params;
     std::vector<ValuePtr> body;
@@ -195,12 +203,20 @@ public:
     LambdaValue(std::shared_ptr<EvalEnv> env, std::vector<std::string> params, std::vector<ValuePtr> body):
         Value(ValueType::LAMBDA_VALUE), ProcedureValue(), env{std::move(env)}, params{std::move(params)}, body{std::move(body)} {}
 
+    LambdaValue(std::shared_ptr<EvalEnv> env, std::vector<std::string> params, std::vector<ValuePtr> body, std::string name):
+        Value(ValueType::LAMBDA_VALUE), ProcedureValue(), name{std::move(name)}, env{std::move(env)}, params{std::move(params)}, body{std::move(body)} {}
+
+
     std::string toString() const override;
 
-    ValuePtr apply(const std::vector<ValuePtr>& args);
+    ValuePtr apply(const std::vector<ValuePtr>& args, EvalEnv& currentEnv) override;
 
     bool isEqual(const ValuePtr &other) const override {
         return this == other.get();
+    }
+
+    std::string getName() const {
+        return name.value_or("<anonymous>");
     }
 };
 

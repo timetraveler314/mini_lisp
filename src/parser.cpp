@@ -18,8 +18,13 @@ Utils::Task<ValuePtr> Parser::parse() {
             co_return std::make_shared<StringValue>(static_cast<StringLiteralToken&>(*token).getValue());
         case TokenType::IDENTIFIER:
             co_return std::make_shared<SymbolValue>(static_cast<IdentifierToken&>(*token).getName());
-        case TokenType::LEFT_PAREN:
-            co_return co_await parseTails();
+        case TokenType::LEFT_PAREN: {
+            auto result = co_await parseTails();
+            if (result->is<PairValue>()) {
+                std::dynamic_pointer_cast<PairValue>(result)->position = token->position;
+            }
+            co_return result;
+        }
         case TokenType::QUOTE:
             co_return Value::fromVector({std::make_shared<SymbolValue>("quote"), co_await parse()});
         case TokenType::UNQUOTE:

@@ -3,8 +3,21 @@
 
 #include <memory>
 #include <optional>
-#include <ostream>
 #include <string>
+
+struct TokenPosition {
+    int line = 1;
+    int column = 0;
+
+    void newLine() {
+        line++;
+        column = 0;
+    }
+
+    void nextColumn() {
+        column++;
+    }
+};
 
 enum class TokenType {
     LEFT_PAREN,
@@ -30,6 +43,8 @@ protected:
     Token(TokenType type) : type{type} {}
 
 public:
+    std::optional<TokenPosition> position = std::nullopt;
+
     virtual ~Token() = default;
 
     static TokenPtr fromChar(char c);

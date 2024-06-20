@@ -9,7 +9,16 @@
 #include "../parser.h"
 #include "../version.h"
 
+void getInput(std::istream &in, std::ostream &out, std::string &program, std::string &line) {
+    std::getline(in, line);
+    line += "\n"; // Compensate for the trailing newline
+    program += line;
+}
+
 void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::ostream>& save, const std::shared_ptr<EvalEnv>& env, bool interactive) {
+    // Show banner
+    out << "MINI-LISP : Minilisp Is Not Implemented Like In Standard Practice" << std::endl;
+
     out << std::format("Mini-Lisp {} ({}, {}, {}) [{} {}] on {}\n"
                  "Type \"help\" for more information.\n",
                        PROJECT_VERSION, PROJECT_GIT_BRANCH,
@@ -19,18 +28,20 @@ void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::o
                        );
     std::vector<std::string> history;
     std::deque<std::string> buffer;
+    int lineCount = 1;
+
     while (true) {
         try {
             Tokenizer tokenizer;
+            if (!interactive) tokenizer.setLineCount(lineCount);
             Parser parser(tokenizer);
             auto valueTask = parser.parse();
 
             std::string program;
 
-            out << ">>> ";
             std::string line;
-            std::getline(in, line);
-            program += line + "\n";
+            out << ">>> ";
+            getInput(in, out, program, line);
             if (in.eof()) return;
 
             if (interactive) {
@@ -66,8 +77,7 @@ void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::o
             tokenizer.feed(line);
             while (!valueTask.ready()) {
                 out << "... ";
-                std::getline(in, line);
-                program += line + "\n";
+                getInput(in, out, program, line);
                 if (in.eof()) {
                     in.clear();
                     throw EOFError("Unexpected EOF");
@@ -77,10 +87,21 @@ void startRepl(std::istream& in, std::ostream& out, const std::shared_ptr<std::o
             auto result = env->eval(std::move(valueTask.get_result().value()));
             out << result->toString() << std::endl;
 
+            lineCount = tokenizer.getLineCount();
+
             history.push_back(program);
             buffer.push_back(program);
-        } catch (std::runtime_error &e) {
+        } catch (LispErrorWithEnv& e) {
+            auto errorEnv = e.getEnv();
+            std::cerr << "Traceback (most recent call last):\n";
+            std::cerr << errorEnv->generateStackTrace(5);
+            errorEnv->clearStack();
             std::cerr << "Error: " << e.what() << std::endl;
+
+            if (!interactive) std::exit(1);
+        } catch (std::runtime_error& e) {
+            std::cerr << "Error: " << e.what() << std::endl;
+            if (!interactive) std::exit(1);
         }
     }
 }
